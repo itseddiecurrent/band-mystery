@@ -18,7 +18,7 @@
 |  | [kat.png](assets/kat.png) |
 | KH | [kh.png](assets/kh.png) |
 | 小莉 | [lili.png](assets/lili.png) |
-| Wills | [wills.png](assets/wills.png) |
+| Willy | [willy.png](assets/willy.png) |
 
 ## 待补充
 

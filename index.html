@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>乐队酒局杀人事件</title>
+  <link rel="stylesheet" href="./src/style.css">
+  <script type="module" src="./src/main.mjs"></script>
+</head>
+<body>
+  <main>
+    <header id="game-header" hidden>
+      <p class="game-name">乐队酒局杀人事件</p>
+      <nav id="tools" aria-label="游戏工具" hidden>
+        <button id="lens-toggle" aria-pressed="false">放大镜</button>
+        <button data-panel="clues">线索</button>
+        <button data-panel="profiles">人物档案</button>
+        <button data-panel="history">记录</button>
+        <button id="exit">退出</button>
+      </nav>
+    </header>
+    <section id="title" aria-labelledby="cover-title">
+      <img class="cover-art" src="./assets/title-screen.png" alt="">
+      <div class="cover-menu">
+        <h1 id="cover-title">乐队酒局<wbr>杀人事件</h1>
+        <div class="cover-actions">
+          <button id="new" lang="en">New Game</button>
+          <button id="continue" lang="en" hidden>Continue</button>
+        </div>
+      </div>
+    </section>
+    <section id="game" hidden aria-label="游戏画面">
+      <div class="scene-frame">
+        <div id="stage">
+          <img id="scene" alt="">
+          <div id="lens" hidden></div>
+          <div id="hotspots"></div>
+        </div>
+      </div>
+      <button id="dialogue" hidden>
+        <span id="portrait-frame" hidden><img id="portrait" alt=""></span>
+        <span><strong id="speaker"></strong><span id="line"></span></span>
+      </button>
+      <nav class="plot-controls" aria-label="剧情导航">
+        <button id="back" disabled>← 后退</button>
+        <button id="forward" disabled>前进 →</button>
+      </nav>
+      <div id="actions"></div>
+    </section>
+    <p id="notice" role="status"></p>
+    <dialog id="panel" aria-labelledby="panel-title">
+      <form method="dialog"><button aria-label="关闭">关闭</button></form>
+      <h2 id="panel-title"></h2>
+      <div id="panel-body"></div>
+    </dialog>
+  </main>
+</body>
+</html>

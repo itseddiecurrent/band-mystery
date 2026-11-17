@@ -1,5 +1,5 @@
-import { clues, dialogues, portrait, profiles, scenes } from './content.mjs';
-import { dispatch, newGame, parseSave, SAVE_KEY } from './game.mjs';
+import { arthurRelationships, characterProfileNames, clues, dialogues, portrait, profiles, scenes } from './content.mjs';
+import { canEnterCornfield, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs';
 
 const byId = id => document.getElementById(id);
 const asset = name => new URL('../assets/' + encodeURIComponent(name), import.meta.url).href;
@@ -69,13 +69,17 @@ function render() {
   if (!game) return;
 
   const progress = game.progress;
-  const scene = scenes[progress.scene];
+  const location = progress.visiting ?? progress.scene;
+  const scene = scenes[location];
   const dialogue = progress.dialogue;
   byId('back').disabled = !game.past.length;
   byId('forward').disabled = !dialogue && !game.future.length;
   const currentLine = dialogue ? dialogues[dialogue.id][dialogue.line] : null;
   setImage(dialogue?.id === 'hand' ? clues.hand.image : scene.image);
   byId('scene').alt = dialogue?.id === 'hand' ? clues.hand.label : scene.label;
+  const jammerLight = byId('jammer-light');
+  jammerLight.hidden = location !== 'fireplace';
+  jammerLight.classList.toggle('off', progress.jammer === 'off');
   stage.classList.toggle('speaking', Boolean(dialogue));
   byId('dialogue').hidden = !dialogue;
   if (dialogue) {
@@ -90,16 +94,29 @@ function render() {
     }
   }
 
-  const inspecting = !dialogue && !progress.finished && !progress.profilesPending;
-  byId('lens-toggle').disabled = !inspecting;
-  if (!inspecting) lens.hidden = true;
+  const exploring = !dialogue && !progress.finished && !progress.profilesPending;
+  const inspecting = exploring && !progress.visiting;
+  const beforeWakingTony = progress.scene === 'tony' && !progress.tonyAwake;
+  byId('lens-toggle').disabled = !exploring || (!progress.visiting && !scene.hotspots.length);
+  if (byId('lens-toggle').disabled) lens.hidden = true;
   const hotspots = byId('hotspots');
   const focused = document.activeElement?.dataset.hotspot;
   hotspots.replaceChildren();
-  if (inspecting) {
+  if (exploring) {
     for (const item of scene.hotspots) {
+      const earlyDrink = location === 'yard' && item.id === 'drink' && !progress.tonyAwake;
+      const revisitArthur = beforeWakingTony && location === 'arthur' &&
+        (item.id === 'body' || (item.id === 'hand' && progress.clues.includes('hand')));
+      if (!inspecting && !earlyDrink && !revisitArthur) continue;
+      if (beforeWakingTony && item.id === 'milk') continue;
+      if (progress.tonyAwake && item.id === 'wake-tony') continue;
+      if (item.id === 'cornfield' && !canEnterCornfield(progress)) continue;
+      if (item.id === 'jammer' && progress.jammer) continue;
       const target = button(item.label, () => send(item.id));
       target.className = 'hotspot';
+      if (item.id === 'danzai-testimony') {
+        target.classList.add('visible-hotspot');
+      }
       target.dataset.hotspot = item.id;
       for (const [index, property] of ['left', 'top', 'width', 'height'].entries()) {
         target.style[property] = item.rect[index] + '%';
@@ -110,11 +127,41 @@ function render() {
   }
   const actions = byId('actions');
   actions.replaceChildren();
-  if (progress.finished) actions.append('开场试玩结束');
-  else if (inspecting && progress.scene === 'arthur') {
-    actions.append(button('去隔间', () => send('finish')));
+  if (inspecting) {
+    if (progress.scene === 'arthur') actions.append(button('去隔间', () => send('tony')));
+    if (progress.scene === 'tony' && progress.tonyAwake) {
+      actions.append(button('检查床头的牛奶杯', () => send('milk')));
+      if (progress.clues.includes('milk')) actions.append(button('去后门', () => send('backdoor')));
+    }
+    if (progress.scene === 'cornfield') actions.append(button('回屋找设备', () => send('fireplace')));
+    if (progress.scene === 'fireplace' && progress.jammer === 'found') {
+      actions.append(button('关闭设备', () => send('disable-jammer')));
+    }
+    if (progress.scene === 'fireplace') {
+      if (progress.policeCalled) actions.append('手机已恢复信号。 ');
+      actions.append(button('去后门', () => send('danzai-statement')));
+    }
+    if (progress.scene === 'police') actions.append(button('查看领带夹', () => send('inspect-clip')));
+    if (progress.scene === 'clip-detail') actions.append(button('问托尼', () => send('ask-tony-photo')));
+    if (progress.scene === 'group-photo' && progress.clues.includes('tie-clip')) {
+      actions.append(button('翻看去年夏天的合照', () => send('open-old-photo')));
+    }
+    if (progress.scene === 'old-photo') actions.append(button('查看去年夏天的合照', () => send('record-old-photo')));
+    if (['group-photo', 'old-photo'].includes(progress.scene) && progress.clues.includes('tie-clip')) {
+      actions.append(button('去医院', () => send('hospital')));
+    }
   }
-  if (progress.profilesPending) openPanel('profiles');
+  if (exploring && (progress.visiting || beforeWakingTony)) {
+    const labels = { landing: '回楼上', arthur: '回去检查亚瑟尸体' };
+    for (const destination of visitDestinations(progress)) {
+      const label = beforeWakingTony ? labels[destination] : undefined;
+      actions.append(button(label ?? `去${scenes[destination].label}`, () => send('visit', { scene: destination })));
+    }
+    if (inspecting && beforeWakingTony) actions.append(button('叫醒托尼', () => send('wake-tony')));
+  }
+  if (progress.profilesPending) {
+    openPanel(progress.profilesPending === true ? 'profiles' : progress.profilesPending);
+  }
 }
 
 function appendText(container, message) {
@@ -144,7 +191,7 @@ function openPanel(kind) {
     title.textContent = '人物档案';
     const grid = document.createElement('div');
     grid.className = 'cast-grid';
-    for (const [name, role, detail] of profiles) {
+    for (const [name, role, detail, age] of profiles) {
       const card = document.createElement('article');
       const image = document.createElement('img');
       image.src = asset(portrait[name]);
@@ -152,12 +199,37 @@ function openPanel(kind) {
       const heading = document.createElement('h3');
       heading.textContent = name;
       card.append(image, heading);
-      appendText(card, role);
+      appendText(card, `${age} 岁 · ${role}`);
       appendText(card, detail);
       grid.append(card);
     }
     body.append(grid);
     if (game.progress.profilesPending) body.append(button('继续调查', () => panel.close()));
+  } else if (Object.hasOwn(characterProfileNames, kind)) {
+    const name = characterProfileNames[kind];
+    title.textContent = `人物档案 · ${name}`;
+    const profile = document.createElement('div');
+    profile.className = 'character-profile';
+    const image = document.createElement('img');
+    image.src = asset(portrait[name]);
+    image.alt = `${name}的立绘`;
+    const details = document.createElement('div');
+    const [, role, description, age] = profiles.find(([member]) => member === name);
+    appendText(details, `${age} 岁 · ${role}`);
+    appendText(details, description);
+    if (kind === 'arthur-profile') {
+      const heading = document.createElement('h3');
+      heading.textContent = '与乐队成员的关系';
+      const list = document.createElement('ul');
+      for (const relationship of arthurRelationships) {
+        const item = document.createElement('li');
+        item.textContent = relationship;
+        list.append(item);
+      }
+      details.append(heading, list);
+    }
+    profile.append(image, details);
+    body.append(profile, button('继续调查', () => panel.close()));
   } else if (kind === 'phone') {
     title.textContent = '手机';
     body.append(button('打开手电筒', () => {
@@ -240,7 +312,7 @@ byId('lens-toggle').onclick = event => {
   event.currentTarget.setAttribute('aria-pressed', String(lensEnabled));
 };
 function placeLens(event) {
-  if (!lensEnabled || !game || game.progress.dialogue || game.progress.finished || panel.open) return;
+  if (!lensEnabled || byId('lens-toggle').disabled || panel.open) return;
   const bounds = stage.getBoundingClientRect();
   const x = event.clientX - bounds.left;
   const y = event.clientY - bounds.top;

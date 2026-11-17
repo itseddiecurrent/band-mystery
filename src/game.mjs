@@ -1,4 +1,20 @@
-import { clues, dialogues, scenes } from './content.mjs';
+import { characterProfileNames, clues, dialogues, nearbyScenes, scenes } from './content.mjs';
+
+export function canEnterCornfield(progress) {
+  return progress.clues.includes('drink');
+}
+
+export function visitDestinations(progress) {
+  const location = progress.visiting ?? progress.scene;
+  if (!progress.tonyAwake) {
+    if (location === 'yard') return ['tony'];
+    if (progress.scene === 'tony') {
+      if (location === 'tony') return ['landing', 'arthur', 'yard'];
+      if (location === 'landing') return ['arthur', 'tony'];
+    }
+  }
+  return (nearbyScenes[location] ?? []).filter(scene => scene !== 'cornfield' || canEnterCornfield(progress));
+}
 
 export const SAVE_KEY = 'band-mystery.opening.v1';
 
@@ -69,6 +85,20 @@ function applyAction(game, action) {
   const progress = next.progress;
   const result = (effect = null) => ({ game: next, effect });
   const unchanged = (effect = null) => ({ game, effect });
+  const arrive = (scene, dialogue) => {
+    enter(next, scene);
+    if (dialogue) startDialogue(next, dialogue);
+  };
+  const recordClue = id => {
+    collect(next, id);
+    return result({ notice: `已记录：${clues[id].label}` });
+  };
+  const visit = scene => {
+    if (scene === progress.scene) delete progress.visiting;
+    else progress.visiting = scene;
+    record(next, `前往 · ${scenes[scene].label}`);
+    return result();
+  };
 
   if (action.type === 'rewind') {
     const checkpoint = next.history[action.index]?.checkpoint;
@@ -87,21 +117,67 @@ function applyAction(game, action) {
     }
     progress.dialogue = null;
     if (current.id === 'opening') progress.profilesPending = true;
+    if (current.id === 'discovery') progress.profilesPending = 'arthur-profile';
+    if (current.id === 'tony-arrival') progress.profilesPending = 'tony-profile';
     if (current.id === 'examination') progress.examined = true;
-    if (current.id === 'hand') {
-      collect(next, 'hand');
-      return result({ notice: '已记录：亚瑟的右手' });
+    if (current.id === 'wake-tony') progress.tonyAwake = true;
+    if (current.id === 'jammer') progress.jammer = 'found';
+    if (current.id === 'call-police') progress.policeCalled = true;
+    switch (current.id) {
+      case 'hand':
+      case 'milk':
+        return recordClue(current.id);
+      case 'backdoor':
+        arrive('lili', 'lili-discovery');
+        break;
+      case 'lili-testimony': {
+        const recorded = recordClue(current.id);
+        arrive('yard');
+        return recorded;
+      }
+      case 'drink': {
+        const recorded = recordClue(current.id);
+        startDialogue(next, 'yard-report');
+        return recorded;
+      }
+      case 'danzai-testimony': {
+        const recorded = recordClue(current.id);
+        arrive('police', 'police-arrival');
+        return recorded;
+      }
+      case 'phone':
+        return result({ panel: 'phone' });
+      case 'ask-tony-photo':
+        enter(next, 'group-photo');
+        break;
+      case 'compare-clip':
+        return recordClue('tie-clip');
     }
-    if (current.id === 'phone') return result({ panel: 'phone' });
     return result();
   }
   if (progress.profilesPending) {
     if (action.type !== 'dismiss-profiles') return unchanged();
+    const name = characterProfileNames[progress.profilesPending];
+    record(next, name ? `查看${name}的人物档案` : '查看人物档案');
+    if (progress.profilesPending === 'tony-profile') progress.tonyProfileSeen = true;
     delete progress.profilesPending;
-    record(next, '查看人物档案');
     return result();
   }
   if (progress.dialogue || progress.finished) return unchanged();
+  if (action.type === 'visit' && visitDestinations(progress).includes(action.scene)) {
+    return visit(action.scene);
+  }
+  if (action.type === 'drink' && progress.visiting === 'yard' && !progress.tonyAwake) {
+    return unchanged({ notice: '喝了一半的饮料，没什么特别' });
+  }
+  if (progress.scene === 'tony' && progress.visiting === 'arthur' && !progress.tonyAwake) {
+    if (action.type === 'body') {
+      startDialogue(next, 'examination');
+      return result();
+    }
+    if (action.type === 'hand' && progress.clues.includes('hand')) return unchanged({ panel: 'hand' });
+  }
+  if (progress.visiting) return unchanged();
 
   switch (action.type) {
     case 'phone':
@@ -121,7 +197,7 @@ function applyAction(game, action) {
       return result({ panel: 'glass', notice: '已记录：碎酒杯' });
     case 'stairs':
       if (progress.scene !== 'landing') break;
-      if (!progress.clues.includes('glass')) return unchanged({ notice: '先检查楼梯旁的碎酒杯。' });
+      if (!progress.clues.includes('glass')) return visit('arthur');
       enter(next, 'arthur');
       startDialogue(next, 'discovery');
       return result();
@@ -131,15 +207,98 @@ function applyAction(game, action) {
       return result();
     case 'hand':
       if (progress.scene !== 'arthur') break;
-      if (!progress.examined) return unchanged({ notice: '先检查亚瑟的情况。' });
+      if (!progress.examined) return unchanged({ notice: '亚瑟的右手紧握着。' });
       if (progress.clues.includes('hand')) return unchanged({ panel: 'hand' });
       startDialogue(next, 'hand');
       return result();
-    case 'finish':
+    case 'tony':
       if (progress.scene !== 'arthur') break;
-      if (!progress.clues.includes('hand')) return unchanged({ notice: '还有现场线索需要查看。' });
-      progress.finished = true;
-      record(next, '开场试玩结束');
+      if (!progress.clues.includes('hand')) return visit('tony');
+      arrive('tony', 'tony-arrival');
+      return result();
+    case 'wake-tony':
+      if (progress.scene !== 'tony' || progress.tonyAwake) break;
+      startDialogue(next, 'wake-tony');
+      return result();
+    case 'milk':
+      if (progress.scene !== 'tony') break;
+      if (!progress.tonyAwake) return unchanged({ notice: '床头柜上搁着一杯牛奶。' });
+      if (progress.clues.includes('milk')) return unchanged({ panel: 'milk' });
+      startDialogue(next, 'milk');
+      return result();
+    case 'backdoor':
+      if (progress.scene !== 'tony') break;
+      if (!progress.clues.includes('milk')) return visit('yard');
+      startDialogue(next, 'backdoor');
+      return result();
+    case 'lili-testimony':
+      if (progress.scene !== 'lili') break;
+      startDialogue(next, 'lili-testimony');
+      return result();
+    case 'drink':
+      if (progress.scene !== 'yard') break;
+      if (progress.clues.includes('drink')) return unchanged({ panel: 'drink' });
+      startDialogue(next, 'drink');
+      return result();
+    case 'cornfield':
+      if (progress.scene !== 'yard' || !canEnterCornfield(progress)) break;
+      arrive('cornfield', 'cornfield');
+      return result();
+    case 'miko-knife':
+    case 'miko-wrist':
+    case 'miko-breathing':
+      if (progress.scene !== 'cornfield') break;
+      if (progress.clues.includes(action.type)) return unchanged({ panel: action.type });
+      collect(next, action.type);
+      return result({ panel: action.type });
+    case 'fireplace':
+      if (progress.scene !== 'cornfield') break;
+      arrive('fireplace');
+      return result();
+    case 'jammer':
+      if (progress.scene !== 'fireplace' || progress.jammer) break;
+      startDialogue(next, 'jammer');
+      return result();
+    case 'disable-jammer':
+      if (progress.scene !== 'fireplace' || progress.jammer !== 'found') break;
+      progress.jammer = 'off';
+      record(next, '关闭屏蔽器，手机恢复信号');
+      startDialogue(next, 'call-police');
+      return result();
+    case 'danzai-statement':
+      if (progress.scene !== 'fireplace') break;
+      if (!progress.policeCalled) return visit('yard');
+      arrive('danzai-statement', 'danzai-arrival');
+      return result();
+    case 'danzai-testimony':
+      if (progress.scene !== 'danzai-statement') break;
+      startDialogue(next, 'danzai-testimony');
+      return result();
+    case 'inspect-clip':
+      if (progress.scene !== 'police') break;
+      arrive('clip-detail', 'inspect-clip');
+      return result();
+    case 'ask-tony-photo':
+      if (progress.scene !== 'clip-detail') break;
+      startDialogue(next, 'ask-tony-photo');
+      return result();
+    case 'compare-clip':
+      if (progress.scene !== 'group-photo') break;
+      if (progress.clues.includes('tie-clip')) return unchanged({ panel: 'tie-clip' });
+      startDialogue(next, 'compare-clip');
+      return result();
+    case 'open-old-photo':
+      if (progress.scene !== 'group-photo' || !progress.clues.includes('tie-clip')) break;
+      enter(next, 'old-photo');
+      return result();
+    case 'record-old-photo':
+      if (progress.scene !== 'old-photo') break;
+      if (progress.clues.includes('old-photo')) return unchanged({ panel: 'old-photo' });
+      collect(next, 'old-photo');
+      return result({ panel: 'old-photo' });
+    case 'hospital':
+      if (!['group-photo', 'old-photo'].includes(progress.scene) || !progress.clues.includes('tie-clip')) break;
+      arrive('hospital', 'hospital-arrival');
       return result();
   }
   return unchanged();
@@ -147,6 +306,7 @@ function applyAction(game, action) {
 
 function validProgress(progress) {
   if (!progress || !Object.hasOwn(scenes, progress.scene) ||
+      (progress.visiting !== undefined && !Object.hasOwn(nearbyScenes, progress.visiting)) ||
       !Array.isArray(progress.clues) || !progress.clues.every(id => Object.hasOwn(clues, id)) ||
       typeof progress.examined !== 'boolean' || typeof progress.finished !== 'boolean') return false;
   if (progress.dialogue === null) return true;
@@ -174,6 +334,14 @@ export function parseSave(raw) {
     for (const key of ['past', 'future']) {
       if (!Object.hasOwn(game, key)) game[key] = [];
       if (!Array.isArray(game[key]) || !game[key].every(validProgress)) return null;
+    }
+    const steps = [game.progress, ...game.history.map(row => row.checkpoint), ...game.past, ...game.future];
+    for (const progress of steps) {
+      // Resume saves from the opening demo and from before Tony's profile was added.
+      if (progress?.scene === 'arthur' && progress.finished) progress.finished = false;
+      if (progress?.scene === 'tony' && !progress.dialogue && !progress.tonyAwake && !progress.tonyProfileSeen) {
+        progress.profilesPending = 'tony-profile';
+      }
     }
     return game;
   } catch {

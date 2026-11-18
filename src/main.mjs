@@ -155,13 +155,14 @@ function render() {
   const location = progress.visiting ?? progress.scene;
   const dialogue = progress.dialogue;
   const backstageMemory = dialogue?.id === 'opening-backstage';
+  const hospitalMemory = dialogue?.id === 'miko-memory';
   const jammerCloseup = location === 'fireplace' && !progress.visiting && !dialogue && progress.jammer === 'found';
   const scene = jammerCloseup ? scenes.fireplace.closeup : scenes[location];
   byId('back').disabled = !game.past.length;
   byId('forward').disabled = !dialogue && !game.future.length;
   const currentLine = dialogue ? dialogues[dialogue.id][dialogue.line] : null;
-  setImage(backstageMemory ? scenes.wake.backstageImage : dialogue?.id === 'hand' ? clues.hand.image : scene.image);
-  byId('scene').alt = backstageMemory ? '演出结束后的后台' : dialogue?.id === 'hand' ? clues.hand.label : scene.label;
+  setImage(backstageMemory ? scenes.wake.backstageImage : hospitalMemory ? scenes.landing.image : dialogue?.id === 'hand' ? clues.hand.image : scene.image);
+  byId('scene').alt = backstageMemory ? '演出结束后的后台' : hospitalMemory ? '昨晚楼梯口的回忆' : dialogue?.id === 'hand' ? clues.hand.label : scene.label;
   const description = byId('scene-description');
   description.textContent = scene.description ?? '';
   description.hidden = !scene.description;
@@ -170,7 +171,7 @@ function render() {
   jammerLight.classList.toggle('off', progress.jammer === 'off');
   const [speaker, line] = currentLine ?? [];
   stage.classList.toggle('speaking', backstageMemory ? Boolean(speaker) : Boolean(dialogue));
-  stage.classList.toggle('memory', backstageMemory || dialogue?.id === 'opening-memory');
+  stage.classList.toggle('memory', backstageMemory || dialogue?.id === 'opening-memory' || hospitalMemory);
   stage.classList.toggle('backstage-memory', backstageMemory);
   byId('dialogue').hidden = !dialogue;
   setPortrait(speaker);
@@ -214,6 +215,13 @@ function render() {
   const actions = byId('actions');
   actions.replaceChildren();
   if (inspecting) {
+    if (progress.scene === 'hospital') {
+      if (!progress.hospitalFollowupDone) {
+        actions.append(button('继续和小柔谈谈', () => send('hospital-followup')));
+      } else if (!progress.clues.includes('miko-text')) {
+        actions.append(button('查看小柔发给威利的短信', () => send('miko-text')));
+      }
+    }
     if (progress.scene === 'arthur') actions.append(button('去隔间', () => send('tony')));
     if (canSearchBedrooms(progress)) {
       actions.append(
@@ -233,6 +241,9 @@ function render() {
         actions.append(button(`去${scenes[room].label}${checked}`, () => send('enter-bedroom', { scene: room })));
       }
       actions.append(button('回后院', () => send('return-yard')));
+    }
+    if (progress.scene === 'yard' && canEnterCornfield(progress)) {
+      actions.append(button('去小柔那里看看', () => send('cornfield')));
     }
     if (bedrooms.includes(progress.scene)) {
       actions.append(button('检查房间', () => send('search-bedroom')));

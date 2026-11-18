@@ -129,6 +129,18 @@ function applyAction(game, action) {
     if (current.id === 'call-police') progress.policeCalled = true;
     if (current.id === 'danzai-return') progress.danzaiReturned = true;
     switch (current.id) {
+      case 'hospital-followup':
+        progress.hospitalFollowupDone = true;
+        break;
+      case 'miko-text':
+        startDialogue(next, 'miko-memory');
+        break;
+      case 'miko-memory':
+        startDialogue(next, 'hospital-aftermath');
+        break;
+      case 'hospital-aftermath':
+        collect(next, 'miko-testimony');
+        return result({ notice: '已记录：小柔的证词' });
       case 'opening':
         startDialogue(next, 'opening-backstage');
         break;
@@ -177,6 +189,17 @@ function applyAction(game, action) {
     if (progress.profilesPending === 'tony-profile') progress.tonyProfileSeen = true;
     delete progress.profilesPending;
     return result();
+  }
+  if (action.type === 'hospital-followup') {
+    if (progress.scene !== 'hospital' || progress.hospitalFollowupDone) return unchanged();
+    startDialogue(next, 'hospital-followup');
+    return result();
+  }
+  if (action.type === 'miko-text') {
+    if (progress.scene !== 'hospital' || !progress.hospitalFollowupDone) return unchanged();
+    if (!progress.clues.includes('miko-text')) collect(next, 'miko-text');
+    startDialogue(next, 'miko-text');
+    return result({ notice: '已记录：小柔发给威利的短信' });
   }
   if (progress.dialogue || progress.finished) return unchanged();
   if (action.type === 'visit' && visitDestinations(progress).includes(action.scene)) {

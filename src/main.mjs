@@ -6,21 +6,64 @@ const asset = name => new URL('../assets/' + encodeURIComponent(name), import.me
 const stage = byId('stage');
 const lens = byId('lens');
 const panel = byId('panel');
+const SESSION_KEY = 'band-mystery.web-session.v1';
+let sessionId = null;
 let game = null;
 let saved = null;
 let lensEnabled = false;
 let image = null;
 
-try {
-  const raw = sessionStorage.getItem(SAVE_KEY);
-  saved = parseSave(raw);
-  if (raw && !saved) notify('无法恢复旧进度，请开始新游戏。');
-} catch {
-  notify('当前浏览器无法保存进度。');
-}
-
 function notify(message) {
   byId('notice').textContent = message;
+}
+
+function updateSessionId(id) {
+  const url = new URL(location.href);
+  if (id) url.searchParams.set('session_id', id);
+  else url.searchParams.delete('session_id');
+  if (url.href !== location.href) history.replaceState(history.state, '', url);
+  sessionId = id;
+}
+
+function readSession(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function persistSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ id: sessionId, game: saved }));
+}
+
+function initializeSession() {
+  const requestedId = new URL(location.href).searchParams.get('session_id');
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    const stored = readSession(raw);
+    if (requestedId && stored?.id === requestedId) {
+      saved = parseSave(JSON.stringify(stored.game));
+      if (stored.game === null || saved) {
+        sessionId = requestedId;
+        return;
+      }
+      notify('无法恢复旧进度，请开始新游戏。');
+    }
+
+    const legacy = raw === null && !window.opener ? sessionStorage.getItem(SAVE_KEY) : null;
+    if (legacy) {
+      saved = parseSave(legacy);
+      if (!saved) notify('无法恢复旧进度，请开始新游戏。');
+    }
+
+    updateSessionId(crypto.randomUUID());
+    persistSession();
+    if (legacy !== null) sessionStorage.removeItem(SAVE_KEY);
+  } catch {
+    if (!sessionId) updateSessionId(crypto.randomUUID());
+    notify('无法保存本次进度，刷新可能丢失。');
+  }
 }
 
 function button(label, handler) {
@@ -33,8 +76,9 @@ function button(label, handler) {
 
 function save() {
   saved = game;
+  if (!sessionId) updateSessionId(crypto.randomUUID());
   try {
-    sessionStorage.setItem(SAVE_KEY, JSON.stringify(game));
+    persistSession();
   } catch {
     notify('无法保存本次进度，刷新可能丢失。');
   }
@@ -281,7 +325,9 @@ byId('continue').onclick = () => {
 byId('exit').onclick = () => {
   if (!confirm('退出会清除本次进度及记录。继续吗？')) return;
   notify('');
+  updateSessionId(null);
   try {
+    sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(SAVE_KEY);
   } catch {
     notify('浏览器未允许清除会话存档。');
@@ -331,4 +377,5 @@ function placeLens(event) {
 stage.addEventListener('pointerdown', placeLens);
 stage.addEventListener('pointermove', placeLens);
 stage.addEventListener('pointerleave', () => { lens.hidden = true; });
+initializeSession();
 render();

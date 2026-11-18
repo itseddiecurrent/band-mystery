@@ -6,12 +6,10 @@ export function canEnterCornfield(progress) {
 
 export function visitDestinations(progress) {
   const location = progress.visiting ?? progress.scene;
-  if (!progress.tonyAwake) {
-    if (location === 'yard') return ['tony'];
-    if (progress.scene === 'tony') {
-      if (location === 'tony') return ['landing', 'arthur', 'yard'];
-      if (location === 'landing') return ['arthur', 'tony'];
-    }
+  if (location === 'yard' && (!progress.tonyAwake || progress.scene === 'tony')) return ['tony'];
+  if (progress.scene === 'tony') {
+    if (location === 'tony') return ['landing', 'arthur', 'yard'];
+    if (location === 'landing') return ['arthur', 'tony'];
   }
   return (nearbyScenes[location] ?? []).filter(scene => scene !== 'cornfield' || canEnterCornfield(progress));
 }
@@ -89,9 +87,9 @@ function applyAction(game, action) {
     enter(next, scene);
     if (dialogue) startDialogue(next, dialogue);
   };
-  const recordClue = id => {
+  const recordClue = (id, effect) => {
     collect(next, id);
-    return result({ notice: `已记录：${clues[id].label}` });
+    return result({ notice: `已记录：${clues[id].label}`, ...effect });
   };
   const visit = scene => {
     if (scene === progress.scene) delete progress.visiting;
@@ -125,8 +123,9 @@ function applyAction(game, action) {
     if (current.id === 'call-police') progress.policeCalled = true;
     switch (current.id) {
       case 'hand':
-      case 'milk':
         return recordClue(current.id);
+      case 'milk':
+        return recordClue(current.id, { panel: current.id });
       case 'backdoor':
         arrive('lili', 'lili-discovery');
         break;
@@ -167,10 +166,11 @@ function applyAction(game, action) {
   if (action.type === 'visit' && visitDestinations(progress).includes(action.scene)) {
     return visit(action.scene);
   }
-  if (action.type === 'drink' && progress.visiting === 'yard' && !progress.tonyAwake) {
+  if (action.type === 'drink' && progress.visiting === 'yard' && (!progress.tonyAwake || progress.scene === 'tony')) {
     return unchanged({ notice: '喝了一半的饮料，没什么特别' });
   }
-  if (progress.scene === 'tony' && progress.visiting === 'arthur' && !progress.tonyAwake) {
+  const revisitingArthur = progress.scene === 'tony' && progress.visiting === 'arthur';
+  if (revisitingArthur) {
     if (action.type === 'body') {
       startDialogue(next, 'examination');
       return result();

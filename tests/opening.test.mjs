@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { access } from 'node:fs/promises';
-import { clues, portrait, profiles, scenes } from '../src/content.mjs';
+import { clues, dialogues, portrait, profiles, scenes } from '../src/content.mjs';
 import { dispatch, newGame, parseSave, visitDestinations } from '../src/game.mjs';
 
 const step = (game, type) => dispatch(game, { type }).game;
@@ -95,8 +95,18 @@ test('the investigation reaches police arrival with each clue and the device shu
   game = step(parseSave(JSON.stringify(game)), 'forward');
   assert.equal(game.progress.dialogue, null);
   assert.equal(game.progress.tonyAwake, true);
-  game = finishDialogue(step(game, 'milk'));
-  assert.equal(step(game, 'milk'), game);
+  assert.deepEqual(visitDestinations(game.progress), ['landing', 'arthur', 'yard']);
+  const awakeScouting = visitWithoutAdvancing(game, 'backdoor', 'yard');
+  assert.deepEqual(visitDestinations(awakeScouting.progress), ['tony']);
+  assert.equal(step(awakeScouting, 'drink'), awakeScouting);
+  game = dispatch(awakeScouting, { type: 'visit', scene: 'tony' }).game;
+  assert.equal(step(game, 'forward'), game);
+  game = step(game, 'milk');
+  for (let line = 1; line < dialogues.milk.length; line++) game = step(game, 'advance');
+  const milk = dispatch(game, { type: 'advance' });
+  assert.deepEqual(milk.effect, { notice: '已记录：托尼的牛奶', panel: 'milk' });
+  game = milk.game;
+  assert.deepEqual(dispatch(game, { type: 'milk' }), { game, effect: { panel: 'milk' } });
 
   game = finishDialogue(step(game, 'backdoor'));
   assert.equal(game.progress.scene, 'lili');
@@ -179,7 +189,8 @@ test('refresh resumes the exact line and rewind keeps history without future clu
 });
 
 test('investigation artwork resolves on disk', async () => {
-  const filenames = [...Object.values(scenes).map(scene => scene.image), clues.hand.image, ...Object.values(portrait)];
+  const clueImages = Object.values(clues).map(clue => clue.image).filter(Boolean);
+  const filenames = [...Object.values(scenes).map(scene => scene.image), ...clueImages, ...Object.values(portrait)];
   await Promise.all(filenames.map(name => access(new URL('../assets/' + name, import.meta.url))));
 });
 

@@ -227,7 +227,8 @@ export const clues = {
   },
   milk: {
     label: '托尼的牛奶',
-    detail: '小柔把牛奶端给托尼。托尼喝了几口后困得起不来。杯口留有几粒没化开的白色粉末。',
+    detail: '小柔把牛奶端给托尼。托尼喝了几口后困得起不来。杯壁上沾着一些白色粉末，牛奶表面也漂着几粒没化开的粉末。',
+    image: 'tony-milk-closeup.png',
   },
   'lili-testimony': {
     label: '小莉的证词',

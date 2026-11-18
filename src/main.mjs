@@ -140,7 +140,8 @@ function render() {
 
   const exploring = !dialogue && !progress.finished && !progress.profilesPending;
   const inspecting = exploring && !progress.visiting;
-  const beforeWakingTony = progress.scene === 'tony' && !progress.tonyAwake;
+  const inTonyChapter = progress.scene === 'tony';
+  const beforeWakingTony = inTonyChapter && !progress.tonyAwake;
   byId('lens-toggle').disabled = !exploring || (!progress.visiting && !scene.hotspots.length);
   if (byId('lens-toggle').disabled) lens.hidden = true;
   const hotspots = byId('hotspots');
@@ -148,8 +149,8 @@ function render() {
   hotspots.replaceChildren();
   if (exploring) {
     for (const item of scene.hotspots) {
-      const earlyDrink = location === 'yard' && item.id === 'drink' && !progress.tonyAwake;
-      const revisitArthur = beforeWakingTony && location === 'arthur' &&
+      const earlyDrink = location === 'yard' && item.id === 'drink' && (!progress.tonyAwake || inTonyChapter);
+      const revisitArthur = inTonyChapter && location === 'arthur' &&
         (item.id === 'body' || (item.id === 'hand' && progress.clues.includes('hand')));
       if (!inspecting && !earlyDrink && !revisitArthur) continue;
       if (beforeWakingTony && item.id === 'milk') continue;
@@ -173,10 +174,6 @@ function render() {
   actions.replaceChildren();
   if (inspecting) {
     if (progress.scene === 'arthur') actions.append(button('去隔间', () => send('tony')));
-    if (progress.scene === 'tony' && progress.tonyAwake) {
-      actions.append(button('检查床头的牛奶杯', () => send('milk')));
-      if (progress.clues.includes('milk')) actions.append(button('去后门', () => send('backdoor')));
-    }
     if (progress.scene === 'cornfield') actions.append(button('回屋找设备', () => send('fireplace')));
     if (progress.scene === 'fireplace' && progress.jammer === 'found') {
       actions.append(button('关闭设备', () => send('disable-jammer')));
@@ -195,10 +192,15 @@ function render() {
       actions.append(button('去医院', () => send('hospital')));
     }
   }
-  if (exploring && (progress.visiting || beforeWakingTony)) {
+  if (exploring && (progress.visiting || inTonyChapter)) {
     const labels = { landing: '回楼上', arthur: '回去检查亚瑟尸体' };
     for (const destination of visitDestinations(progress)) {
-      const label = beforeWakingTony ? labels[destination] : undefined;
+      if (inspecting && inTonyChapter && destination === 'yard') {
+        const label = progress.clues.includes('milk') ? '去后门' : '去后院';
+        actions.append(button(label, () => send('backdoor')));
+        continue;
+      }
+      const label = inTonyChapter ? labels[destination] : undefined;
       actions.append(button(label ?? `去${scenes[destination].label}`, () => send('visit', { scene: destination })));
     }
     if (inspecting && beforeWakingTony) actions.append(button('叫醒托尼', () => send('wake-tony')));

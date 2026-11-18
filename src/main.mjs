@@ -3,6 +3,8 @@ import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, pars
 
 const byId = id => document.getElementById(id);
 const asset = name => new URL('../assets/' + encodeURIComponent(name), import.meta.url).href;
+// Browsers may still have the original opaque PNGs cached at the unversioned URLs.
+const portraitAsset = name => asset(name) + '?v=transparent';
 const stage = byId('stage');
 const lens = byId('lens');
 const panel = byId('panel');
@@ -117,7 +119,7 @@ function setImage(name) {
 function setPortrait(speaker) {
   const characterImage = byId('portrait');
   const file = speaker && portrait[speaker];
-  const url = file ? asset(file) : null;
+  const url = file ? portraitAsset(file) : null;
   if (characterImage.getAttribute('src') === url) return;
 
   // A browser can keep painting the old image while the new source loads.
@@ -299,7 +301,7 @@ function openPanel(kind) {
     for (const [name, role, detail, age] of profiles) {
       const card = document.createElement('article');
       const image = document.createElement('img');
-      image.src = asset(portrait[name]);
+      image.src = portraitAsset(portrait[name]);
       image.alt = '';
       const heading = document.createElement('h3');
       heading.textContent = name;
@@ -316,7 +318,7 @@ function openPanel(kind) {
     const profile = document.createElement('div');
     profile.className = 'character-profile';
     const image = document.createElement('img');
-    image.src = asset(portrait[name]);
+    image.src = portraitAsset(portrait[name]);
     image.alt = `${name}的立绘`;
     const details = document.createElement('div');
     const [, role, description, age] = profiles.find(([member]) => member === name);

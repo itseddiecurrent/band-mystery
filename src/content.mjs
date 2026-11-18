@@ -2,6 +2,7 @@ export const scenes = {
   wake: {
     label: '楼上房间',
     image: 'upstairs-wake-up.png',
+    backstageImage: 'opening-backstage.png',
     hotspots: [{ id: 'phone', label: '发亮的手机', rect: [65, 67, 16, 12] }],
   },
   landing: {
@@ -43,6 +44,18 @@ export const scenes = {
       { id: 'cornfield', label: '去玉米地', rect: [81, 37, 18, 52] },
     ],
   },
+  'bedroom-hall': {
+    label: '卧室走廊', image: 'upstairs-hallway.png', hotspots: [],
+  },
+  'band-bedroom': {
+    label: '亚瑟、威利和蛋仔的房间', image: 'band-shared-bedroom.png', hotspots: [],
+    inspection: '一张床，地上铺着毯子和充气床垫。房间里没有人。',
+  },
+  'miko-lili-bedroom': {
+    label: '小柔和小莉的房间', image: 'miko-lili-shared-bedroom.png',
+    hotspots: [{ id: 'miko-purse', label: '查看小柔的挎包', rect: [53, 64, 16, 21] }],
+    inspection: '房间里没有人。小柔的挎包还留在房里。',
+  },
   cornfield: {
     label: '玉米地',
     image: 'miko-cornfield.png',
@@ -57,6 +70,10 @@ export const scenes = {
     label: '客厅',
     image: 'living-room-fireplace.png',
     hotspots: [{ id: 'jammer', label: '查看壁炉里的红灯', rect: [76, 48, 10, 13] }],
+    closeup: {
+      label: '壁炉里的信号屏蔽器', image: 'fireplace-jammer-closeup.png',
+      hotspots: [{ id: 'disable-jammer', label: '信号屏蔽器电源', rect: [59, 66, 5.5, 12] }],
+    },
   },
   'danzai-statement': {
     label: '后门',
@@ -90,6 +107,17 @@ export const scenes = {
   },
 };
 
+export const purseImages = {
+  closed: 'miko-purse-closed.png',
+  open: 'miko-purse-open.png',
+};
+
+export const purseHotspots = [
+  { id: 'miko-pill-box', label: '查看药盒', rect: [29.5, 24, 16.5, 18.8] },
+  { id: 'miko-injury-record', label: '查看泛黄的检查记录', rect: [25, 43, 20, 26] },
+  { id: 'miko-pregnancy-test', label: '查看未拆封的盒子', rect: [46, 51.5, 25, 20] },
+];
+
 // Physical connections are independent of which story events are ready.
 export const nearbyScenes = {
   landing: ['arthur'],
@@ -105,10 +133,24 @@ export const dialogues = {
     [null, '洛克在楼上房间的沙发上醒来，四周一片昏暗。'],
     ['洛克', '头好晕，我怎么了？'],
     ['洛克', '对了，昨晚刚演完。托尼租了这栋房子，叫大家过来庆功。'],
-    [null, '洛克想起小柔昨晚跟他说过的话。'],
+    [null, '洛克想起昨晚散场时，大家还在后台收拾器材。'],
+  ],
+  'opening-backstage': [
+    [null, '昨晚，演出结束后。大家正在后台收拾器材。'],
+    ['威利', '跟你说了叫你多练最后一段，弹得跟狗屎一样。观众没朝你扔白菜都给你面子了。'],
+    ['亚瑟', '会不会好好说话？你怎么知道我没练？为了把这段弹好，我这周天天都练到凌晨。'],
+    ['威利', '那就不是练得不好，是水平不行。'],
+    ['亚瑟', '你就负责张张嘴唱唱歌，弹几个钢琴键，你懂个啥？今天唱得跟卡带似的。要不是小柔唱得好，把你盖过去了，早就没观众了。'],
+    ['小柔', '好了啦，明明大家都演得很棒，何必这么针锋相对。'],
+    ['小莉', '他们俩就是这样，吵得越凶感情越深。老是看到你们和蛋仔凑在一起，跟密谋什么似的。'],
+    ['蛋仔', '别乱说，咱就是练练琴。上了台大家都是战友，没有私人恩怨。小柔和威利分手多久了，不也一样一起演出？'],
+    ['威利', '给我闭嘴吧蛋仔。大家都这么熟，就别哪壶不开提哪壶了。'],
+    ['托尼', '你们别打起来啊。冲动起来，蛋仔可是会拿琴砸你的。'],
+    ['蛋仔', '我咋会这样？以前也就是做做样子。我的主张就是不爽就说出来，憋着会憋出内伤的。'],
+    ['洛克', '好啦好啦，大家都这么棒，何必这样。'],
   ],
   'opening-memory': [
-    [null, '昨天晚上。'],
+    [null, '后来，到了庆功的房子，小柔过来找洛克。'],
     ['小柔', '洛克，有你和我们一起真好，演出这么成功多亏了你的调音了！'],
     ['洛克', '哪里哪里，你们演得好啊，一个晚上都是粉丝的尖叫声。'],
     ['小柔', '兄弟，得好好跟你喝一杯！'],
@@ -178,6 +220,8 @@ export const dialogues = {
     [null, '托尼从停车处跑回来，手里还攥着车钥匙。'],
     ['托尼', '我车窗被砸了。后座那个箱子也没了，里面是演出会用到的信号屏蔽器，虽然这次没用到，但我一直放车里。'],
     ['小莉', '有人开了屏蔽器，所以我们打不出去？'],
+  ],
+  'danzai-return': [
     [null, '蛋仔从玉米地里钻出来，裤腿上都是泥。'],
     ['蛋仔', '小柔在玉米地里，我叫不醒她。电话也打不通，快来帮忙。'],
   ],
@@ -217,6 +261,23 @@ export const dialogues = {
 };
 
 export const clues = {
+  'miko-pill-box': {
+    label: '小柔的药盒',
+    detail: '药盒里放了不少安眠药胶囊。原来小柔一直都在吃安眠药。',
+    image: purseImages.open,
+    crop: { x: 471, y: 205, width: 307, height: 207, sourceWidth: 1672 },
+  },
+  'miko-injury-record': {
+    label: '小柔的验伤记录',
+    detail: '发现一张检查记录，日期是几个月前。',
+    image: 'miko-injury-record.png',
+  },
+  'miko-pregnancy-test': {
+    label: '小柔的验孕棒',
+    detail: '没开封的验孕棒，小柔的包里怎么会有这个？',
+    image: purseImages.open,
+    crop: { x: 740, y: 464, width: 466, height: 226, sourceWidth: 1672 },
+  },
   'miko-knife': {
     label: '小柔手里的水果刀',
     detail: '小柔手里拿着的是水果刀，应该是厨房里的。',

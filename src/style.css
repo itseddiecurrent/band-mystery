@@ -116,6 +116,7 @@ button:disabled { opacity: .5; cursor: default; }
 .speaking #scene { filter: blur(5px) brightness(.68); }
 .memory #scene { filter: grayscale(1) sepia(.7) blur(3px) brightness(.85); }
 .memory #portrait { --portrait-brightness: .82; }
+.backstage-memory:not(.speaking) #scene { filter: grayscale(1) sepia(.7) brightness(.85); }
 #jammer-light {
   position: absolute; left: 80.5%; top: 54.7%;
   width: clamp(3px, .55%, 8px); aspect-ratio: 1;
@@ -171,6 +172,10 @@ dialog::backdrop { background: #0a090cbf; }
 dialog form { float: right; }
 dialog img { display: block; width: 100%; }
 dialog img.phone-clue { max-height: min(58dvh, 29rem); object-fit: contain; }
+.purse-actions { margin-top: .6rem; }
+.purse-contents { position: relative; }
+.clue-closeup { position: relative; overflow: hidden; }
+.clue-closeup img { position: absolute; }
 dialog li { padding: .25rem 0; }
 
 .cast-panel {

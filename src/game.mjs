@@ -1,7 +1,13 @@
 import { characterProfileNames, clues, dialogues, nearbyScenes, scenes } from './content.mjs';
 
+export const bedrooms = ['band-bedroom', 'miko-lili-bedroom'];
+
 export function canEnterCornfield(progress) {
-  return progress.clues.includes('drink');
+  return progress.danzaiReturned === true;
+}
+
+export function canSearchBedrooms(progress) {
+  return progress.scene === 'yard' && progress.clues.includes('drink') && !canEnterCornfield(progress);
 }
 
 export function visitDestinations(progress) {
@@ -42,7 +48,7 @@ function enter(game, scene) {
 
 export function newGame() {
   const game = {
-    version: 2,
+    version: 3,
     progress: { scene: 'wake', dialogue: null, clues: [], examined: false, finished: false },
     history: [],
     past: [],
@@ -121,8 +127,12 @@ function applyAction(game, action) {
     if (current.id === 'wake-tony') progress.tonyAwake = true;
     if (current.id === 'jammer') progress.jammer = 'found';
     if (current.id === 'call-police') progress.policeCalled = true;
+    if (current.id === 'danzai-return') progress.danzaiReturned = true;
     switch (current.id) {
       case 'opening':
+        startDialogue(next, 'opening-backstage');
+        break;
+      case 'opening-backstage':
         startDialogue(next, 'opening-memory');
         break;
       case 'opening-memory':
@@ -252,6 +262,41 @@ function applyAction(game, action) {
       if (progress.clues.includes('drink')) return unchanged({ panel: 'drink' });
       startDialogue(next, 'drink');
       return result();
+    case 'search-rooms':
+      if (!canSearchBedrooms(progress)) break;
+      enter(next, 'bedroom-hall');
+      return result();
+    case 'miko-purse':
+      if (progress.scene === 'miko-lili-bedroom') return unchanged({ panel: 'miko-purse' });
+      break;
+    case 'miko-pill-box':
+    case 'miko-injury-record':
+    case 'miko-pregnancy-test':
+      if (progress.scene !== 'miko-lili-bedroom') break;
+      if (progress.clues.includes(action.type)) return unchanged({ panel: action.type });
+      return recordClue(action.type, { panel: action.type });
+    case 'enter-bedroom':
+      if (progress.scene !== 'bedroom-hall' || !bedrooms.includes(action.scene)) break;
+      enter(next, action.scene);
+      return result();
+    case 'search-bedroom': {
+      if (!bedrooms.includes(progress.scene)) break;
+      const room = scenes[progress.scene];
+      const searched = progress.searchedBedrooms ??= [];
+      if (searched.includes(progress.scene)) return unchanged({ notice: room.inspection });
+      searched.push(progress.scene);
+      record(next, `已检查 · ${room.label}`);
+      return result({ notice: room.inspection });
+    }
+    case 'return-bedroom-hall':
+      if (!bedrooms.includes(progress.scene)) break;
+      enter(next, 'bedroom-hall');
+      return result();
+    case 'return-yard':
+      if (progress.scene !== 'bedroom-hall') break;
+      enter(next, 'yard');
+      if (bedrooms.every(scene => progress.searchedBedrooms?.includes(scene))) startDialogue(next, 'danzai-return');
+      return result();
     case 'cornfield':
       if (progress.scene !== 'yard' || !canEnterCornfield(progress)) break;
       arrive('cornfield', 'cornfield');
@@ -321,6 +366,8 @@ function validProgress(progress) {
   if (!progress || !Object.hasOwn(scenes, progress.scene) ||
       (progress.visiting !== undefined && !Object.hasOwn(nearbyScenes, progress.visiting)) ||
       !Array.isArray(progress.clues) || !progress.clues.every(id => Object.hasOwn(clues, id)) ||
+      (progress.searchedBedrooms !== undefined && (!Array.isArray(progress.searchedBedrooms) ||
+        !progress.searchedBedrooms.every(scene => bedrooms.includes(scene)))) ||
       typeof progress.examined !== 'boolean' || typeof progress.finished !== 'boolean') return false;
   if (progress.dialogue === null) return true;
   const { id, line } = progress.dialogue ?? {};
@@ -330,16 +377,26 @@ function validProgress(progress) {
 export function parseSave(raw) {
   try {
     const game = JSON.parse(raw);
-    if (![1, 2].includes(game?.version) || !Array.isArray(game.history)) return null;
-    if (game.version === 1) {
+    if (![1, 2, 3].includes(game?.version) || !Array.isArray(game.history)) return null;
+    if (game.version < 3) {
       const oldSteps = [game.progress, ...game.history.map(row => row?.checkpoint),
         ...(Array.isArray(game.past) ? game.past : []), ...(Array.isArray(game.future) ? game.future : [])];
       for (const progress of oldSteps) {
         const dialogue = progress?.dialogue;
-        if (dialogue?.id === 'opening' && Number.isInteger(dialogue.line) && dialogue.line > 3) dialogue.line = 3;
-        if (dialogue?.id === 'discovery' && dialogue.line === 1) dialogue.line = 0;
+        if (game.version === 1) {
+          if (dialogue?.id === 'opening' && Number.isInteger(dialogue.line) && dialogue.line > 3) dialogue.line = 3;
+          if (dialogue?.id === 'discovery' && dialogue.line === 1) dialogue.line = 0;
+        }
+        if (dialogue?.id === 'yard-report' && Number.isInteger(dialogue.line) && dialogue.line >= 3) {
+          // Older saves kept Danzai's return at the end of Tony's report.
+          dialogue.id = 'danzai-return';
+          dialogue.line -= 3;
+        } else if (Array.isArray(progress?.clues) && progress.clues.includes('drink') &&
+            (progress.scene !== 'yard' || dialogue === null)) {
+          progress.danzaiReturned = true;
+        }
       }
-      game.version = 2;
+      game.version = 3;
     }
     if (!validProgress(game.progress)) return null;
     if (!game.history.every(row => typeof row?.label === 'string' &&

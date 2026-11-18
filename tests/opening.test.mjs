@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { access } from 'node:fs/promises';
-import { clues, dialogues, portrait, profiles, scenes } from '../src/content.mjs';
+import { clues, dialogues, portrait, profiles, purseImages, scenes } from '../src/content.mjs';
 import { dispatch, newGame, parseSave, visitDestinations } from '../src/game.mjs';
 
 const step = (game, type) => dispatch(game, { type }).game;
@@ -12,7 +12,7 @@ function visitWithoutAdvancing(game, type, destination) {
   return response.game;
 }
 function finishDialogue(game) {
-  for (let i = 0; game.progress.dialogue && i < 20; i++) game = step(game, 'advance');
+  for (let i = 0; game.progress.dialogue && i < 40; i++) game = step(game, 'advance');
   assert.equal(game.progress.dialogue, null);
   return game;
 }
@@ -135,6 +135,40 @@ test('the investigation reaches police arrival with each clue and the device shu
   assert.equal(step(game, 'cornfield'), game);
   game = finishDialogue(step(game, 'drink'));
   assert.equal(step(game, 'drink'), game);
+  assert.equal(step(game, 'cornfield'), game);
+  const enterBedroom = (current, scene) => dispatch(current, { type: 'enter-bedroom', scene }).game;
+  game = step(game, 'search-rooms');
+  assert.equal(game.progress.scene, 'bedroom-hall');
+  game = enterBedroom(game, 'band-bedroom');
+  game = step(game, 'search-bedroom');
+  assert.equal(step(game, 'search-bedroom'), game);
+  game = step(step(game, 'return-bedroom-hall'), 'return-yard');
+  assert.equal(game.progress.dialogue, null);
+  assert.equal(step(game, 'cornfield'), game);
+  game = enterBedroom(step(game, 'search-rooms'), 'miko-lili-bedroom');
+  assert.deepEqual(dispatch(game, { type: 'miko-purse' }), { game, effect: { panel: 'miko-purse' } });
+  for (const type of ['miko-pill-box', 'miko-injury-record', 'miko-pregnancy-test']) {
+    const record = dispatch(game, { type });
+    assert.equal(record.effect.panel, type);
+    assert.equal(record.game.progress.clues.at(-1), type);
+    assert.deepEqual(dispatch(record.game, { type }), { game: record.game, effect: { panel: type } });
+  }
+  game = step(game, 'search-bedroom');
+  assert.deepEqual(parseSave(JSON.stringify(game)), game);
+  game = step(game, 'return-bedroom-hall');
+  const danzaiReturn = step(game, 'return-yard');
+  assert.equal(danzaiReturn.progress.scene, 'yard');
+  assert.deepEqual(danzaiReturn.progress.dialogue, { id: 'danzai-return', line: 0 });
+  assert.equal(step(danzaiReturn, 'cornfield'), danzaiReturn);
+  game = finishDialogue(danzaiReturn);
+  assert.equal(step(game, 'search-rooms'), game);
+
+  const oldReport = structuredClone(danzaiReturn);
+  oldReport.version = 2;
+  oldReport.progress.dialogue = { id: 'yard-report', line: 4 };
+  const restoredReport = parseSave(JSON.stringify(oldReport));
+  assert.deepEqual(restoredReport.progress.dialogue, { id: 'danzai-return', line: 1 });
+  assert.equal(step(finishDialogue(restoredReport), 'cornfield').progress.scene, 'cornfield');
   const cornfieldClues = ['miko-knife', 'miko-wrist', 'miko-breathing', 'miko-missing-shoe'];
   for (const id of cornfieldClues) assert.equal(step(game, id), game);
   game = finishDialogue(step(game, 'cornfield'));
@@ -210,7 +244,8 @@ test('refresh resumes the exact line and rewind keeps history without future clu
 
 test('investigation artwork resolves on disk', async () => {
   const clueImages = Object.values(clues).map(clue => clue.image).filter(Boolean);
-  const filenames = [...Object.values(scenes).map(scene => scene.image), ...clueImages, ...Object.values(portrait)];
+  const filenames = [...Object.values(scenes).map(scene => scene.image), scenes.fireplace.closeup.image, scenes.wake.backstageImage, ...clueImages,
+    ...Object.values(portrait), ...Object.values(purseImages)];
   await Promise.all(filenames.map(name => access(new URL('../assets/' + name, import.meta.url))));
 });
 
@@ -238,6 +273,8 @@ test('back and forward restore story steps and clue state without duplicating th
 test('the opening moves from the memory back to the present before opening the cast page', () => {
   let game = newGame();
   for (const _ of dialogues.opening) game = step(game, 'advance');
+  assert.deepEqual(game.progress.dialogue, { id: 'opening-backstage', line: 0 });
+  for (const _ of dialogues['opening-backstage']) game = step(game, 'advance');
   assert.deepEqual(game.progress.dialogue, { id: 'opening-memory', line: 0 });
   assert.equal(step(game, 'phone'), game);
   game = step(game, 'advance');

@@ -1,5 +1,5 @@
-import { arthurRelationships, characterProfileNames, clues, dialogues, portrait, profiles, scenes } from './content.mjs';
-import { canEnterCornfield, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs';
+import { arthurRelationships, characterProfileNames, clues, dialogues, portrait, profiles, purseHotspots, purseImages, scenes } from './content.mjs';
+import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs';
 
 const byId = id => document.getElementById(id);
 const asset = name => new URL('../assets/' + encodeURIComponent(name), import.meta.url).href;
@@ -74,6 +74,15 @@ function button(label, handler) {
   return element;
 }
 
+function hotspotButton({ id, label, rect }) {
+  const target = button(label, () => send(id));
+  target.className = 'hotspot';
+  target.dataset.hotspot = id;
+  const [left, top, width, height] = rect.map(value => `${value}%`);
+  Object.assign(target.style, { left, top, width, height });
+  return target;
+}
+
 function save() {
   saved = game;
   if (!sessionId) updateSessionId(crypto.randomUUID());
@@ -114,20 +123,23 @@ function render() {
 
   const progress = game.progress;
   const location = progress.visiting ?? progress.scene;
-  const scene = scenes[location];
   const dialogue = progress.dialogue;
+  const backstageMemory = dialogue?.id === 'opening-backstage';
+  const jammerCloseup = location === 'fireplace' && !progress.visiting && !dialogue && progress.jammer === 'found';
+  const scene = jammerCloseup ? scenes.fireplace.closeup : scenes[location];
   byId('back').disabled = !game.past.length;
   byId('forward').disabled = !dialogue && !game.future.length;
   const currentLine = dialogue ? dialogues[dialogue.id][dialogue.line] : null;
-  setImage(dialogue?.id === 'hand' ? clues.hand.image : scene.image);
-  byId('scene').alt = dialogue?.id === 'hand' ? clues.hand.label : scene.label;
+  setImage(backstageMemory ? scenes.wake.backstageImage : dialogue?.id === 'hand' ? clues.hand.image : scene.image);
+  byId('scene').alt = backstageMemory ? '演出结束后的后台' : dialogue?.id === 'hand' ? clues.hand.label : scene.label;
   const jammerLight = byId('jammer-light');
-  jammerLight.hidden = location !== 'fireplace';
+  jammerLight.hidden = location !== 'fireplace' || jammerCloseup;
   jammerLight.classList.toggle('off', progress.jammer === 'off');
-  stage.classList.toggle('speaking', Boolean(dialogue));
-  stage.classList.toggle('memory', dialogue?.id === 'opening-memory');
-  byId('dialogue').hidden = !dialogue;
   const [speaker, line] = currentLine ?? [];
+  stage.classList.toggle('speaking', backstageMemory ? Boolean(speaker) : Boolean(dialogue));
+  stage.classList.toggle('memory', backstageMemory || dialogue?.id === 'opening-memory');
+  stage.classList.toggle('backstage-memory', backstageMemory);
+  byId('dialogue').hidden = !dialogue;
   const characterImage = byId('portrait');
   const portraitFile = speaker && portrait[speaker];
   characterImage.hidden = !portraitFile;
@@ -158,14 +170,13 @@ function render() {
       if (progress.tonyAwake && item.id === 'wake-tony') continue;
       if (item.id === 'cornfield' && !canEnterCornfield(progress)) continue;
       if (item.id === 'jammer' && progress.jammer) continue;
-      const target = button(item.label, () => send(item.id));
-      target.className = 'hotspot';
+      const target = hotspotButton(item);
+      if (item.id === 'disable-jammer') {
+        target.setAttribute('role', 'switch');
+        target.setAttribute('aria-checked', 'true');
+      }
       if (item.id === 'danzai-testimony') {
         target.classList.add('visible-hotspot');
-      }
-      target.dataset.hotspot = item.id;
-      for (const [index, property] of ['left', 'top', 'width', 'height'].entries()) {
-        target.style[property] = item.rect[index] + '%';
       }
       hotspots.append(target);
       if (focused === item.id) target.focus();
@@ -175,10 +186,19 @@ function render() {
   actions.replaceChildren();
   if (inspecting) {
     if (progress.scene === 'arthur') actions.append(button('去隔间', () => send('tony')));
-    if (progress.scene === 'cornfield') actions.append(button('回屋找设备', () => send('fireplace')));
-    if (progress.scene === 'fireplace' && progress.jammer === 'found') {
-      actions.append(button('关闭设备', () => send('disable-jammer')));
+    if (canSearchBedrooms(progress)) actions.append(button('去其他房间看看', () => send('search-rooms')));
+    if (progress.scene === 'bedroom-hall') {
+      for (const room of bedrooms) {
+        const checked = progress.searchedBedrooms?.includes(room) ? '（已检查）' : '';
+        actions.append(button(`去${scenes[room].label}${checked}`, () => send('enter-bedroom', { scene: room })));
+      }
+      actions.append(button('回后院', () => send('return-yard')));
     }
+    if (bedrooms.includes(progress.scene)) {
+      actions.append(button('检查房间', () => send('search-bedroom')));
+      actions.append(button('回走廊', () => send('return-bedroom-hall')));
+    }
+    if (progress.scene === 'cornfield') actions.append(button('回屋找设备', () => send('fireplace')));
     if (progress.scene === 'fireplace') {
       if (progress.policeCalled) actions.append('手机已恢复信号。 ');
       actions.append(button('去后门', () => send('danzai-statement')));
@@ -224,7 +244,19 @@ function showClue(container, id) {
     img.src = asset(clue.image);
     img.alt = clue.label;
     if (id === 'arthur-phone') img.className = 'phone-clue';
-    container.append(img);
+    if (clue.crop) {
+      const { x, y, width, height, sourceWidth } = clue.crop;
+      const closeup = document.createElement('div');
+      closeup.className = 'clue-closeup';
+      closeup.style.aspectRatio = `${width} / ${height}`;
+      img.style.width = `${sourceWidth / width * 100}%`;
+      img.style.left = `${-x / width * 100}%`;
+      img.style.top = `${-y / height * 100}%`;
+      closeup.append(img);
+      container.append(closeup);
+    } else {
+      container.append(img);
+    }
   }
   appendText(container, clue.detail);
 }
@@ -233,6 +265,7 @@ function openPanel(kind) {
   lens.hidden = true;
   const body = byId('panel-body');
   const title = byId('panel-title');
+  const fromPurse = panel.open && body.querySelector('.purse-contents');
   body.replaceChildren();
   panel.classList.toggle('cast-panel', kind === 'profiles');
   if (kind === 'profiles') {
@@ -284,6 +317,28 @@ function openPanel(kind) {
       panel.close();
       send('flashlight');
     }));
+  } else if (kind === 'miko-purse' || kind === 'miko-purse-open') {
+    title.textContent = '小柔的挎包';
+    const opened = kind === 'miko-purse-open';
+    const image = document.createElement('img');
+    image.src = asset(opened ? purseImages.open : purseImages.closed);
+    image.alt = opened ? '打开的挎包，里面有药盒、文件和一个未拆封的盒子' : '木椅上合着的酒红色挎包';
+    if (opened) {
+      const contents = document.createElement('div');
+      contents.className = 'purse-contents';
+      contents.append(image, ...purseHotspots.map(hotspotButton));
+      body.append(contents);
+      panel.querySelector('form button').focus();
+    } else {
+      const choices = document.createElement('nav');
+      choices.className = 'purse-actions';
+      choices.setAttribute('aria-label', '挎包操作');
+      choices.append(
+        button('打开挎包', () => openPanel('miko-purse-open')),
+        button('保持原样', () => panel.close()),
+      );
+      body.append(image, choices);
+    }
   } else if (kind === 'clues') {
     title.textContent = '线索册';
     if (!game.progress.clues.length) appendText(body, '尚未发现线索。');
@@ -306,6 +361,11 @@ function openPanel(kind) {
   } else {
     title.textContent = clues[kind].label;
     showClue(body, kind);
+    if (fromPurse) {
+      const back = button('返回挎包', () => openPanel('miko-purse-open'));
+      body.append(back);
+      back.focus();
+    }
   }
   if (!panel.open) panel.showModal();
 }

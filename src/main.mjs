@@ -12,6 +12,7 @@ let game = null;
 let saved = null;
 let lensEnabled = false;
 let image = null;
+let portraitDecode = null;
 
 function notify(message) {
   byId('notice').textContent = message;
@@ -113,13 +114,41 @@ function setImage(name) {
   lens.hidden = true;
 }
 
+function setPortrait(speaker) {
+  const characterImage = byId('portrait');
+  const file = speaker && portrait[speaker];
+  const url = file ? asset(file) : null;
+  if (characterImage.getAttribute('src') === url) return;
+
+  // A browser can keep painting the old image while the new source loads.
+  characterImage.hidden = true;
+  portraitDecode = null;
+  if (!url) {
+    characterImage.removeAttribute('src');
+    return;
+  }
+
+  characterImage.classList.toggle('opaque-portrait', speaker === '蛋仔' || speaker === '小柔');
+  characterImage.src = url;
+  const request = characterImage.decode();
+  portraitDecode = request;
+  request.then(() => {
+    if (portraitDecode === request) characterImage.hidden = false;
+  }, () => {
+    // Leave the portrait hidden if the image fails to load.
+  });
+}
+
 function render() {
   byId('continue').hidden = !saved;
   byId('title').hidden = Boolean(game);
   byId('game-header').hidden = !game;
   byId('tools').hidden = !game;
   byId('game').hidden = !game;
-  if (!game) return;
+  if (!game) {
+    setPortrait(null);
+    return;
+  }
 
   const progress = game.progress;
   const location = progress.visiting ?? progress.scene;
@@ -140,11 +169,7 @@ function render() {
   stage.classList.toggle('memory', backstageMemory || dialogue?.id === 'opening-memory');
   stage.classList.toggle('backstage-memory', backstageMemory);
   byId('dialogue').hidden = !dialogue;
-  const characterImage = byId('portrait');
-  const portraitFile = speaker && portrait[speaker];
-  characterImage.hidden = !portraitFile;
-  characterImage.classList.toggle('opaque-portrait', speaker === '蛋仔' || speaker === '小柔');
-  if (portraitFile) characterImage.src = asset(portraitFile);
+  setPortrait(speaker);
   if (dialogue) {
     byId('speaker').textContent = speaker ?? '';
     byId('line').textContent = line;

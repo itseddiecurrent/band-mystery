@@ -114,6 +114,7 @@ export const purseImages = {
 
 export const purseHotspots = [
   { id: 'miko-pill-box', label: '查看药盒', rect: [29.5, 24, 16.5, 18.8] },
+  { id: 'miko-diagnosis-prescription', label: '查看诊断书和处方', rect: [46.8, 25, 24.4, 26.5] },
   { id: 'miko-injury-record', label: '查看泛黄的检查记录', rect: [25, 43, 20, 26] },
   { id: 'miko-pregnancy-test', label: '查看未拆封的盒子', rect: [46, 51.5, 25, 20] },
 ];
@@ -266,6 +267,11 @@ export const clues = {
     detail: '药盒里放了不少安眠药胶囊。原来小柔一直都在吃安眠药。',
     image: purseImages.open,
     crop: { x: 471, y: 205, width: 307, height: 207, sourceWidth: 1672 },
+  },
+  'miko-diagnosis-prescription': {
+    label: '小柔的诊断书和处方',
+    detail: '诊断书上写着抑郁症和失眠症，旁边是医生开的安眠药处方。',
+    image: 'miko-diagnosis-prescription.png',
   },
   'miko-injury-record': {
     label: '小柔的验伤记录',

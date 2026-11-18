@@ -270,6 +270,7 @@ function applyAction(game, action) {
       if (progress.scene === 'miko-lili-bedroom') return unchanged({ panel: 'miko-purse' });
       break;
     case 'miko-pill-box':
+    case 'miko-diagnosis-prescription':
     case 'miko-injury-record':
     case 'miko-pregnancy-test':
       if (progress.scene !== 'miko-lili-bedroom') break;

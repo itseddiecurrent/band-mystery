@@ -128,7 +128,6 @@ function setPortrait(speaker) {
     return;
   }
 
-  characterImage.classList.toggle('opaque-portrait', speaker === '蛋仔' || speaker === '小柔');
   characterImage.src = url;
   const request = characterImage.decode();
   portraitDecode = request;
@@ -347,7 +346,7 @@ function openPanel(kind) {
     const opened = kind === 'miko-purse-open';
     const image = document.createElement('img');
     image.src = asset(opened ? purseImages.open : purseImages.closed);
-    image.alt = opened ? '打开的挎包，里面有药盒、文件和一个未拆封的盒子' : '木椅上合着的酒红色挎包';
+    image.alt = opened ? '打开的挎包，里面有药盒、诊断书和处方、泛黄的检查记录和一个未拆封的盒子' : '木椅上合着的酒红色挎包';
     if (opened) {
       const contents = document.createElement('div');
       contents.className = 'purse-contents';

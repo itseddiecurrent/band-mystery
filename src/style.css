@@ -152,10 +152,9 @@ button:disabled { opacity: .5; cursor: default; }
   max-width: 85%;
   object-fit: contain;
   object-position: center bottom;
-  filter: var(--portrait-cutout,) brightness(var(--portrait-brightness, 1)) drop-shadow(0 .25rem .65rem #08060ab0);
+  filter: brightness(var(--portrait-brightness, 1)) drop-shadow(0 .25rem .65rem #08060ab0);
   pointer-events: none;
 }
-#portrait.opaque-portrait { --portrait-cutout: url(#portrait-cutout); }
 #speaker, #line { display: block; }
 #speaker { color: #f0be86; }
 .plot-controls { justify-content: space-between; margin-top: .5rem; }

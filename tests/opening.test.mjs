@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { access } from 'node:fs/promises';
-import { clues, dialogues, portrait, profiles, purseImages, scenes } from '../src/content.mjs';
+import { clues, dialogues, portrait, profiles, purseHotspots, purseImages, scenes } from '../src/content.mjs';
 import { dispatch, newGame, parseSave, visitDestinations } from '../src/game.mjs';
 
 const step = (game, type) => dispatch(game, { type }).game;
@@ -147,7 +147,8 @@ test('the investigation reaches police arrival with each clue and the device shu
   assert.equal(step(game, 'cornfield'), game);
   game = enterBedroom(step(game, 'search-rooms'), 'miko-lili-bedroom');
   assert.deepEqual(dispatch(game, { type: 'miko-purse' }), { game, effect: { panel: 'miko-purse' } });
-  for (const type of ['miko-pill-box', 'miko-injury-record', 'miko-pregnancy-test']) {
+  assert.ok(purseHotspots.some(({ id }) => id === 'miko-diagnosis-prescription'));
+  for (const { id: type } of purseHotspots) {
     const record = dispatch(game, { type });
     assert.equal(record.effect.panel, type);
     assert.equal(record.game.progress.clues.at(-1), type);

@@ -8,13 +8,6 @@
   <script type="module" src="./src/main.mjs"></script>
 </head>
 <body>
-  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
-    <filter id="portrait-cutout" color-interpolation-filters="sRGB">
-      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  40 40 40 0 -.4" result="cutout">
-      </feColorMatrix>
-      <feComposite in="SourceGraphic" in2="cutout" operator="in"></feComposite>
-    </filter>
-  </svg>
   <main>
     <header id="game-header" hidden>
       <p class="game-name">乐队酒局杀人事件</p>

@@ -114,7 +114,7 @@ function applyAction(game, action) {
       return result();
     }
     progress.dialogue = null;
-    if (current.id === 'opening') progress.profilesPending = true;
+    if (current.id === 'opening-return') progress.profilesPending = true;
     if (current.id === 'discovery') progress.profilesPending = 'arthur-profile';
     if (current.id === 'tony-arrival') progress.profilesPending = 'tony-profile';
     if (current.id === 'examination') progress.examined = true;
@@ -122,6 +122,12 @@ function applyAction(game, action) {
     if (current.id === 'jammer') progress.jammer = 'found';
     if (current.id === 'call-police') progress.policeCalled = true;
     switch (current.id) {
+      case 'opening':
+        startDialogue(next, 'opening-memory');
+        break;
+      case 'opening-memory':
+        startDialogue(next, 'opening-return');
+        break;
       case 'hand':
         return recordClue(current.id);
       case 'milk':
@@ -170,6 +176,12 @@ function applyAction(game, action) {
     return unchanged({ notice: '喝了一半的饮料，没什么特别' });
   }
   const revisitingArthur = progress.scene === 'tony' && progress.visiting === 'arthur';
+  if (action.type === 'arthur-phone' && progress.examined &&
+      (revisitingArthur || (progress.scene === 'arthur' && !progress.visiting))) {
+    if (progress.clues.includes('arthur-phone')) return unchanged({ panel: 'arthur-phone' });
+    collect(next, 'arthur-phone');
+    return result({ panel: 'arthur-phone', notice: '已记录：亚瑟的手机' });
+  }
   if (revisitingArthur) {
     if (action.type === 'body') {
       startDialogue(next, 'examination');
@@ -247,6 +259,7 @@ function applyAction(game, action) {
     case 'miko-knife':
     case 'miko-wrist':
     case 'miko-breathing':
+    case 'miko-missing-shoe':
       if (progress.scene !== 'cornfield') break;
       if (progress.clues.includes(action.type)) return unchanged({ panel: action.type });
       collect(next, action.type);

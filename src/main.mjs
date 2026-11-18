@@ -125,17 +125,17 @@ function render() {
   jammerLight.hidden = location !== 'fireplace';
   jammerLight.classList.toggle('off', progress.jammer === 'off');
   stage.classList.toggle('speaking', Boolean(dialogue));
+  stage.classList.toggle('memory', dialogue?.id === 'opening-memory');
   byId('dialogue').hidden = !dialogue;
+  const [speaker, line] = currentLine ?? [];
+  const characterImage = byId('portrait');
+  const portraitFile = speaker && portrait[speaker];
+  characterImage.hidden = !portraitFile;
+  characterImage.classList.toggle('opaque-portrait', speaker === '蛋仔' || speaker === '小柔');
+  if (portraitFile) characterImage.src = asset(portraitFile);
   if (dialogue) {
-    const [speaker, line] = currentLine;
     byId('speaker').textContent = speaker ?? '';
     byId('line').textContent = line;
-    const icon = byId('portrait');
-    const character = speaker;
-    byId('portrait-frame').hidden = !portrait[character];
-    if (portrait[character]) {
-      icon.src = asset(portrait[character]);
-    }
   }
 
   const exploring = !dialogue && !progress.finished && !progress.profilesPending;
@@ -151,8 +151,9 @@ function render() {
     for (const item of scene.hotspots) {
       const earlyDrink = location === 'yard' && item.id === 'drink' && (!progress.tonyAwake || inTonyChapter);
       const revisitArthur = inTonyChapter && location === 'arthur' &&
-        (item.id === 'body' || (item.id === 'hand' && progress.clues.includes('hand')));
+        (item.id === 'body' || (item.id === 'hand' && progress.clues.includes('hand')) || item.id === 'arthur-phone');
       if (!inspecting && !earlyDrink && !revisitArthur) continue;
+      if (item.id === 'arthur-phone' && !progress.examined) continue;
       if (beforeWakingTony && item.id === 'milk') continue;
       if (progress.tonyAwake && item.id === 'wake-tony') continue;
       if (item.id === 'cornfield' && !canEnterCornfield(progress)) continue;
@@ -222,6 +223,7 @@ function showClue(container, id) {
     const img = document.createElement('img');
     img.src = asset(clue.image);
     img.alt = clue.label;
+    if (id === 'arthur-phone') img.className = 'phone-clue';
     container.append(img);
   }
   appendText(container, clue.detail);

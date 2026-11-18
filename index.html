@@ -8,6 +8,13 @@
   <script type="module" src="./src/main.mjs"></script>
 </head>
 <body>
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <filter id="portrait-cutout" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  40 40 40 0 -.4" result="cutout">
+      </feColorMatrix>
+      <feComposite in="SourceGraphic" in2="cutout" operator="in"></feComposite>
+    </filter>
+  </svg>
   <main>
     <header id="game-header" hidden>
       <p class="game-name">乐队酒局杀人事件</p>
@@ -36,10 +43,10 @@
           <div id="jammer-light" aria-hidden="true" hidden></div>
           <div id="lens" hidden></div>
           <div id="hotspots"></div>
+          <img id="portrait" alt="" hidden>
         </div>
       </div>
       <button id="dialogue" hidden>
-        <span id="portrait-frame" hidden><img id="portrait" alt=""></span>
         <span><strong id="speaker"></strong><span id="line"></span></span>
       </button>
       <nav class="plot-controls" aria-label="剧情导航">

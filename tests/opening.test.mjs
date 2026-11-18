@@ -52,6 +52,26 @@ test('opening gates must be met and clues only enter the notebook once', () => {
   assert.equal(step(game, 'tony').progress.scene, 'tony');
 });
 
+test('Arthur’s phone is an optional pocket clue available after the body examination', () => {
+  const landing = step(opening(), 'glass');
+  assert.equal(step(landing, 'arthur-phone'), landing);
+
+  const body = step(finishDialogue(step(landing, 'stairs')), 'dismiss-profiles');
+  assert.equal(step(body, 'arthur-phone'), body);
+
+  const examined = finishDialogue(step(body, 'body'));
+  const found = dispatch(examined, { type: 'arthur-phone' });
+  assert.equal(found.effect.panel, 'arthur-phone');
+  assert.deepEqual(found.game.progress.clues, ['glass', 'arthur-phone']);
+  assert.equal(dispatch(found.game, { type: 'arthur-phone' }).game, found.game);
+  assert.deepEqual(step(found.game, 'back').progress.clues, ['glass']);
+  assert.deepEqual(parseSave(JSON.stringify(found.game)).progress.clues, found.game.progress.clues);
+
+  const tony = step(finishDialogue(step(finishDialogue(step(examined, 'hand')), 'tony')), 'dismiss-profiles');
+  const revisit = dispatch(tony, { type: 'visit', scene: 'arthur' }).game;
+  assert.equal(dispatch(revisit, { type: 'arthur-phone' }).effect.panel, 'arthur-phone');
+});
+
 test('the investigation reaches police arrival with each clue and the device shutdown recorded once', () => {
   let game = step(finishDialogue(step(step(opening(), 'glass'), 'stairs')), 'dismiss-profiles');
   game = finishDialogue(step(game, 'body'));
@@ -115,7 +135,7 @@ test('the investigation reaches police arrival with each clue and the device shu
   assert.equal(step(game, 'cornfield'), game);
   game = finishDialogue(step(game, 'drink'));
   assert.equal(step(game, 'drink'), game);
-  const cornfieldClues = ['miko-knife', 'miko-wrist', 'miko-breathing'];
+  const cornfieldClues = ['miko-knife', 'miko-wrist', 'miko-breathing', 'miko-missing-shoe'];
   for (const id of cornfieldClues) assert.equal(step(game, id), game);
   game = finishDialogue(step(game, 'cornfield'));
   assert.equal(step(game, 'fireplace').progress.scene, 'fireplace');
@@ -148,7 +168,7 @@ test('the investigation reaches police arrival with each clue and the device shu
   game = finishDialogue(step(game, 'danzai-testimony'));
   assert.equal(game.progress.scene, 'police');
   assert.deepEqual(game.progress.clues, ['glass', 'hand', 'milk', 'lili-testimony', 'drink', ...cornfieldClues, 'danzai-testimony']);
-  assert.equal(game.history.filter(row => row.label.startsWith('已记录 · ')).length, 9);
+  assert.equal(game.history.filter(row => row.label.startsWith('已记录 · ')).length, game.progress.clues.length);
   assert.equal(step(game, 'danzai-testimony'), game);
 
   assert.equal(step(game, 'ask-tony-photo'), game);
@@ -215,8 +235,17 @@ test('back and forward restore story steps and clue state without duplicating th
 });
 
 
-test('the cast page follows the waking dialogue and gates the first investigation', () => {
-  const game = finishDialogue(newGame());
+test('the opening moves from the memory back to the present before opening the cast page', () => {
+  let game = newGame();
+  for (const _ of dialogues.opening) game = step(game, 'advance');
+  assert.deepEqual(game.progress.dialogue, { id: 'opening-memory', line: 0 });
+  assert.equal(step(game, 'phone'), game);
+  game = step(game, 'advance');
+  assert.deepEqual(parseSave(JSON.stringify(game)).progress.dialogue, { id: 'opening-memory', line: 1 });
+  for (const _ of dialogues['opening-memory'].slice(1)) game = step(game, 'advance');
+  assert.deepEqual(game.progress.dialogue, { id: 'opening-return', line: 0 });
+  assert.equal(step(game, 'back').progress.dialogue.id, 'opening-memory');
+  game = finishDialogue(game);
   assert.equal(game.progress.profilesPending, true);
   assert.equal(step(game, 'phone'), game);
   assert.equal(parseSave(JSON.stringify(game)).progress.profilesPending, true);

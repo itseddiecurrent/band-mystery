@@ -101,6 +101,11 @@ button:disabled { opacity: .5; cursor: default; }
   place-items: center;
   background: #14131a;
 }
+.scene-frame:has(.speaking) { align-items: end; }
+@media (max-width: 40rem) and (orientation: portrait) {
+  #game:has(.speaking) { align-self: center; grid-template-rows: auto auto auto auto; }
+  .scene-frame:has(.speaking) { aspect-ratio: 1672 / 941; }
+}
 #stage {
   width: min(100cqw, calc(100cqh * 1672 / 941));
   max-width: 100%;
@@ -109,6 +114,8 @@ button:disabled { opacity: .5; cursor: default; }
 }
 #scene { width: 100%; height: 100%; display: block; }
 .speaking #scene { filter: blur(5px) brightness(.68); }
+.memory #scene { filter: grayscale(1) sepia(.7) blur(3px) brightness(.85); }
+.memory #portrait { --portrait-brightness: .82; }
 #jammer-light {
   position: absolute; left: 80.5%; top: 54.7%;
   width: clamp(3px, .55%, 8px); aspect-ratio: 1;
@@ -130,26 +137,24 @@ button:disabled { opacity: .5; cursor: default; }
 .hotspot:focus-visible { color: white; background: #18151a66; }
 .visible-hotspot { color: white; background: #18151abf; border-color: #807079; }
 #dialogue {
-  width: 100%; display: flex; align-items: center; gap: 1rem;
-  min-height: 5rem; text-align: left; background: #1d1920; margin-top: .4rem;
-}
-#portrait-frame {
-  width: clamp(3.65rem, 7vw, 5.25rem);
-  aspect-ratio: 1;
-  flex: none;
-  overflow: hidden;
-  display: block;
-  border-radius: .3rem;
-  background: #302630;
+  width: 100%; display: flex; align-items: center;
+  min-height: 5rem; text-align: left; background: #1d1920;
 }
 #portrait {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
   display: block;
-  width: 100%;
-  height: auto;
-  transform: scale(1.14);
-  transform-origin: 50% 4%;
-  filter: contrast(1.1) drop-shadow(1px 0 0 #181018) drop-shadow(-1px 0 0 #181018);
+  width: auto;
+  height: 94%;
+  max-width: 85%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: var(--portrait-cutout,) brightness(var(--portrait-brightness, 1)) drop-shadow(0 .25rem .65rem #08060ab0);
+  pointer-events: none;
 }
+#portrait.opaque-portrait { --portrait-cutout: url(#portrait-cutout); }
 #speaker, #line { display: block; }
 #speaker { color: #f0be86; }
 .plot-controls { justify-content: space-between; margin-top: .5rem; }
@@ -159,13 +164,13 @@ button:disabled { opacity: .5; cursor: default; }
 .plot-controls button { min-height: 44px; }
 @media (max-height: 520px) {
   header { margin-bottom: .35rem; }
-  #dialogue { min-height: 3rem; padding-block: .3rem; gap: .6rem; }
-  #portrait-frame { width: 3rem; }
+  #dialogue { min-height: 3rem; padding-block: .3rem; }
 }
 dialog { width: min(36rem, 83vw); max-height: 80vh; background: #201b22; color: inherit; border: 1px solid #6a6060; border-radius: .5rem; }
 dialog::backdrop { background: #0a090cbf; }
 dialog form { float: right; }
 dialog img { display: block; width: 100%; }
+dialog img.phone-clue { max-height: min(58dvh, 29rem); object-fit: contain; }
 dialog li { padding: .25rem 0; }
 
 .cast-panel {

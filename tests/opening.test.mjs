@@ -133,9 +133,31 @@ test('the investigation reaches police arrival with each clue and the device shu
   game = finishDialogue(step(game, 'lili-testimony'));
   assert.equal(game.progress.scene, 'yard');
   assert.equal(step(game, 'cornfield'), game);
-  game = finishDialogue(step(game, 'drink'));
+  assert.equal(step(game, 'tony-car'), game);
+  const yardReport = step(step(step(game, 'drink'), 'advance'), 'advance');
+  assert.equal(yardReport.progress.dialogue.id, 'yard-report');
+  assert.equal(step(yardReport, 'tony-car'), yardReport);
+  game = finishDialogue(yardReport);
   assert.equal(step(game, 'drink'), game);
   assert.equal(step(game, 'cornfield'), game);
+  assert.equal(step(game, 'tony-tire-tracks'), game);
+  const car = step(game, 'tony-car');
+  assert.equal(car.progress.scene, 'tony-car');
+  assert.equal(scenes[car.progress.scene].hotspots[0].id, 'tony-tire-tracks');
+  const tracks = step(car, 'tony-tire-tracks');
+  assert.equal(tracks.progress.scene, 'tony-tire-tracks');
+  assert.deepEqual(parseSave(JSON.stringify(tracks)), tracks);
+  assert.equal(step(tracks, 'tony-car').progress.scene, 'tony-car');
+  assert.deepEqual(step(car, 'return-yard').progress, game.progress);
+  game = step(tracks, 'return-yard');
+  assert.equal(game.progress.scene, 'yard');
+  assert.equal(game.progress.dialogue, null);
+  const savedBeforeCarGate = structuredClone(game);
+  for (const progress of [savedBeforeCarGate.progress, ...savedBeforeCarGate.past]) {
+    delete progress.sawTireTracks;
+  }
+  assert.deepEqual(parseSave(JSON.stringify(savedBeforeCarGate)), game);
+  assert.deepEqual(step(tracks, 'back').progress, car.progress);
   const enterBedroom = (current, scene) => dispatch(current, { type: 'enter-bedroom', scene }).game;
   game = step(game, 'search-rooms');
   assert.equal(game.progress.scene, 'bedroom-hall');
@@ -148,15 +170,35 @@ test('the investigation reaches police arrival with each clue and the device shu
   game = enterBedroom(step(game, 'search-rooms'), 'miko-lili-bedroom');
   assert.deepEqual(dispatch(game, { type: 'miko-purse' }), { game, effect: { panel: 'miko-purse' } });
   assert.ok(purseHotspots.some(({ id }) => id === 'miko-diagnosis-prescription'));
+  const checkedRoom = step(game, 'search-bedroom');
+  assert.equal(step(step(checkedRoom, 'return-bedroom-hall'), 'return-yard').progress.dialogue, null);
   for (const { id: type } of purseHotspots) {
     const record = dispatch(game, { type });
     assert.equal(record.effect.panel, type);
     assert.equal(record.game.progress.clues.at(-1), type);
     assert.deepEqual(dispatch(record.game, { type }), { game: record.game, effect: { panel: type } });
+    game = record.game;
   }
+  assert.equal(step(step(game, 'return-bedroom-hall'), 'return-yard').progress.dialogue, null);
   game = step(game, 'search-bedroom');
   assert.deepEqual(parseSave(JSON.stringify(game)), game);
   game = step(game, 'return-bedroom-hall');
+  const roomsFirst = structuredClone(game);
+  delete roomsFirst.progress.sawTireTracks;
+  for (const { id } of purseHotspots) {
+    const missingClue = structuredClone(game);
+    missingClue.progress.clues = game.progress.clues.filter(clue => clue !== id);
+    assert.equal(step(missingClue, 'return-yard').progress.dialogue, null);
+  }
+  const yardBeforeCar = step(roomsFirst, 'return-yard');
+  assert.equal(yardBeforeCar.progress.dialogue, null);
+  const windowOnly = step(yardBeforeCar, 'tony-car');
+  assert.equal(step(windowOnly, 'return-yard').progress.dialogue, null);
+  const tireTracksLast = step(windowOnly, 'tony-tire-tracks');
+  assert.equal(tireTracksLast.progress.dialogue, null);
+  for (const path of [tireTracksLast, step(tireTracksLast, 'tony-car')]) {
+    assert.deepEqual(step(path, 'return-yard').progress.dialogue, { id: 'danzai-return', line: 0 });
+  }
   const danzaiReturn = step(game, 'return-yard');
   assert.equal(danzaiReturn.progress.scene, 'yard');
   assert.deepEqual(danzaiReturn.progress.dialogue, { id: 'danzai-return', line: 0 });
@@ -202,7 +244,10 @@ test('the investigation reaches police arrival with each clue and the device shu
   game = finishDialogue(step(game, 'danzai-statement'));
   game = finishDialogue(step(game, 'danzai-testimony'));
   assert.equal(game.progress.scene, 'police');
-  assert.deepEqual(game.progress.clues, ['glass', 'hand', 'milk', 'lili-testimony', 'drink', ...cornfieldClues, 'danzai-testimony']);
+  assert.deepEqual(game.progress.clues, [
+    'glass', 'hand', 'milk', 'lili-testimony', 'drink',
+    ...purseHotspots.map(({ id }) => id), ...cornfieldClues, 'danzai-testimony',
+  ]);
   assert.equal(game.history.filter(row => row.label.startsWith('已记录 · ')).length, game.progress.clues.length);
   assert.equal(step(game, 'danzai-testimony'), game);
 

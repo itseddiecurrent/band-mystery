@@ -90,7 +90,7 @@ button:disabled { opacity: .5; cursor: default; }
 }
 #game {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto auto auto;
+  grid-template-rows: minmax(0, 1fr) auto auto auto auto;
   min-width: 0;
 }
 .scene-frame {
@@ -103,7 +103,7 @@ button:disabled { opacity: .5; cursor: default; }
 }
 .scene-frame:has(.speaking) { align-items: end; }
 @media (max-width: 40rem) and (orientation: portrait) {
-  #game:has(.speaking) { align-self: center; grid-template-rows: auto auto auto auto; }
+  #game:has(.speaking) { align-self: center; grid-template-rows: auto auto auto auto auto; }
   .scene-frame:has(.speaking) { aspect-ratio: 1672 / 941; }
 }
 #stage {
@@ -137,6 +137,12 @@ button:disabled { opacity: .5; cursor: default; }
 .hotspot:focus:not(:focus-visible) { outline: none; }
 .hotspot:focus-visible { color: white; background: #18151a66; }
 .visible-hotspot { color: white; background: #18151abf; border-color: #807079; }
+#scene-description {
+  margin: 0;
+  padding: .65rem .75rem;
+  background: #1d1920;
+  line-height: 1.5;
+}
 #dialogue {
   width: 100%; display: flex; align-items: center;
   min-height: 5rem; text-align: left; background: #1d1920;

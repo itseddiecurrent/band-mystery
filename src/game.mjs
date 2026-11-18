@@ -1,4 +1,4 @@
-import { characterProfileNames, clues, dialogues, nearbyScenes, scenes } from './content.mjs';
+import { characterProfileNames, clues, dialogues, nearbyScenes, purseHotspots, scenes } from './content.mjs';
 
 export const bedrooms = ['band-bedroom', 'miko-lili-bedroom'];
 
@@ -262,6 +262,15 @@ function applyAction(game, action) {
       if (progress.clues.includes('drink')) return unchanged({ panel: 'drink' });
       startDialogue(next, 'drink');
       return result();
+    case 'tony-car':
+      if (!canSearchBedrooms(progress) && progress.scene !== 'tony-tire-tracks') break;
+      enter(next, 'tony-car');
+      return result();
+    case 'tony-tire-tracks':
+      if (progress.scene !== 'tony-car') break;
+      progress.sawTireTracks = true;
+      enter(next, 'tony-tire-tracks');
+      return result();
     case 'search-rooms':
       if (!canSearchBedrooms(progress)) break;
       enter(next, 'bedroom-hall');
@@ -294,9 +303,13 @@ function applyAction(game, action) {
       enter(next, 'bedroom-hall');
       return result();
     case 'return-yard':
-      if (progress.scene !== 'bedroom-hall') break;
+      if (!['bedroom-hall', 'tony-car', 'tony-tire-tracks'].includes(progress.scene)) break;
       enter(next, 'yard');
-      if (bedrooms.every(scene => progress.searchedBedrooms?.includes(scene))) startDialogue(next, 'danzai-return');
+      if (canSearchBedrooms(progress) && progress.sawTireTracks === true &&
+          bedrooms.every(scene => progress.searchedBedrooms?.includes(scene)) &&
+          purseHotspots.every(({ id }) => progress.clues.includes(id))) {
+        startDialogue(next, 'danzai-return');
+      }
       return result();
     case 'cornfield':
       if (progress.scene !== 'yard' || !canEnterCornfield(progress)) break;
@@ -367,6 +380,7 @@ function validProgress(progress) {
   if (!progress || !Object.hasOwn(scenes, progress.scene) ||
       (progress.visiting !== undefined && !Object.hasOwn(nearbyScenes, progress.visiting)) ||
       !Array.isArray(progress.clues) || !progress.clues.every(id => Object.hasOwn(clues, id)) ||
+      (progress.sawTireTracks !== undefined && typeof progress.sawTireTracks !== 'boolean') ||
       (progress.searchedBedrooms !== undefined && (!Array.isArray(progress.searchedBedrooms) ||
         !progress.searchedBedrooms.every(scene => bedrooms.includes(scene)))) ||
       typeof progress.examined !== 'boolean' || typeof progress.finished !== 'boolean') return false;
@@ -406,7 +420,16 @@ export function parseSave(raw) {
       if (!Object.hasOwn(game, key)) game[key] = [];
       if (!Array.isArray(game[key]) || !game[key].every(validProgress)) return null;
     }
-    const steps = [game.progress, ...game.history.map(row => row.checkpoint), ...game.past, ...game.future];
+    const timeline = [...game.past, game.progress, ...game.future.slice().reverse()];
+    let sawTireTracks = false;
+    for (const progress of timeline) {
+      // Older saves recorded the tire-track visit as a scene, without a progress flag.
+      // Rewinding to a dialogue checkpoint can start a new path before that visit.
+      if (progress.dialogue) sawTireTracks = false;
+      if (progress.scene === 'tony-tire-tracks') sawTireTracks = true;
+      if (sawTireTracks) progress.sawTireTracks ??= true;
+    }
+    const steps = [...timeline, ...game.history.map(row => row.checkpoint)];
     for (const progress of steps) {
       // Resume saves from the opening demo and from before Tony's profile was added.
       if (progress?.scene === 'arthur' && progress.finished) progress.finished = false;

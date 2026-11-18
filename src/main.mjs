@@ -162,6 +162,9 @@ function render() {
   const currentLine = dialogue ? dialogues[dialogue.id][dialogue.line] : null;
   setImage(backstageMemory ? scenes.wake.backstageImage : dialogue?.id === 'hand' ? clues.hand.image : scene.image);
   byId('scene').alt = backstageMemory ? '演出结束后的后台' : dialogue?.id === 'hand' ? clues.hand.label : scene.label;
+  const description = byId('scene-description');
+  description.textContent = scene.description ?? '';
+  description.hidden = !scene.description;
   const jammerLight = byId('jammer-light');
   jammerLight.hidden = location !== 'fireplace' || jammerCloseup;
   jammerLight.classList.toggle('off', progress.jammer === 'off');
@@ -212,7 +215,18 @@ function render() {
   actions.replaceChildren();
   if (inspecting) {
     if (progress.scene === 'arthur') actions.append(button('去隔间', () => send('tony')));
-    if (canSearchBedrooms(progress)) actions.append(button('去其他房间看看', () => send('search-rooms')));
+    if (canSearchBedrooms(progress)) {
+      actions.append(
+        button('去其他房间看看', () => send('search-rooms')),
+        button('去托尼车那里看看', () => send('tony-car')),
+      );
+    }
+    if (progress.scene === 'tony-tire-tracks') {
+      actions.append(button('回到车尾', () => send('tony-car')));
+    }
+    if (progress.scene === 'tony-car' || progress.scene === 'tony-tire-tracks') {
+      actions.append(button('回后院', () => send('return-yard')));
+    }
     if (progress.scene === 'bedroom-hall') {
       for (const room of bedrooms) {
         const checked = progress.searchedBedrooms?.includes(room) ? '（已检查）' : '';

@@ -44,6 +44,18 @@ export const scenes = {
       { id: 'cornfield', label: '去玉米地', rect: [81, 37, 18, 52] },
     ],
   },
+  'tony-car': {
+    label: '托尼的车',
+    image: 'tony-suv-broken-rear-window.png',
+    description: '托尼的车窗被砸碎，里面放着几把演出的吉他，还有一个开着的盒子。有人偷走了里面的信号屏蔽器？谁会这么做？',
+    hotspots: [{ id: 'tony-tire-tracks', label: '查看车右边的地面', rect: [80, 40, 20, 60] }],
+  },
+  'tony-tire-tracks': {
+    label: '托尼车旁的轮胎印',
+    image: 'tony-suv-tire-tracks.png',
+    description: '托尼的车旁边有一条车轮印，本来停在这里的是威利的车，他把车开走了？',
+    hotspots: [],
+  },
   'bedroom-hall': {
     label: '卧室走廊', image: 'upstairs-hallway.png', hotspots: [],
   },
@@ -219,7 +231,7 @@ export const dialogues = {
   ],
   'yard-report': [
     [null, '托尼从停车处跑回来，手里还攥着车钥匙。'],
-    ['托尼', '我车窗被砸了。后座那个箱子也没了，里面是演出会用到的信号屏蔽器，虽然这次没用到，但我一直放车里。'],
+    ['托尼', '我车窗被砸了。后座那个箱子被打开，里面东西被拿走了，是演出会用到的信号屏蔽器，虽然这次没用到，但我一直放车里。'],
     ['小莉', '有人开了屏蔽器，所以我们打不出去？'],
   ],
   'danzai-return': [

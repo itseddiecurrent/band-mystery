@@ -1,11 +1,12 @@
-import { arthurRelationships, characterProfileNames, clues, dialogues, lineFor, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes } from './content.mjs';
+import { arthurRelationships, characterProfileNames, clues, dialogues, lineFor, nearbyScenes, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes, storyTransitions } from './content.mjs';
 import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs';
 import { canSolve } from './evidence_list.mjs';
 import { createPortraitCache, portraitFilename } from './portrait-cache.mjs';
 
 const byId = id => document.getElementById(id);
 // Refresh URLs after the custom-domain rollback so browsers do not reuse cached redirects.
-const asset = name => new URL('../assets/' + name.split('/').map(encodeURIComponent).join('/'), import.meta.url).href + '?v=pages-recovery-1';
+const assetFilename = name => name === 'arthur-phone-lock-screen.png' ? name : name.replace(/\.png$/, '.jpg');
+const asset = name => new URL('../assets/' + assetFilename(name).split('/').map(encodeURIComponent).join('/'), import.meta.url).href + '?v=scene-images-1';
 const portraitAsset = name => asset(portraitFilename(name));
 const portraitCache = createPortraitCache(portraitAsset);
 const stage = byId('stage');
@@ -23,6 +24,39 @@ let saved = null;
 let lensEnabled = false;
 let image = null;
 let portraitTarget = null;
+const preloadedSceneImages = new Map();
+
+function preloadSceneImage(name) {
+  if (!name || name === image || preloadedSceneImages.has(name)) return;
+  const warmed = new Image();
+  warmed.decoding = 'async';
+  warmed.fetchPriority = 'low';
+  warmed.src = asset(name);
+  const entry = { warmed, ready: warmed.decode().catch(() => false) };
+  preloadedSceneImages.set(name, entry);
+  while (preloadedSceneImages.size > 4) {
+    preloadedSceneImages.delete(preloadedSceneImages.keys().next().value);
+  }
+}
+
+function preloadLikelyNextImages(progress, location) {
+  const names = [];
+  const dialogue = progress.dialogue;
+  if (dialogue) {
+    const rows = dialogues[dialogue.id] ?? [];
+    const nextArtwork = rows[dialogue.line + 1]?.[2]?.image;
+    if (nextArtwork) names.push(nextArtwork);
+    if (dialogue.line === rows.length - 1) {
+      const [nextScene] = storyTransitions[dialogue.id] ?? [];
+      if (nextScene && scenes[nextScene]?.image) names.push(scenes[nextScene].image);
+    }
+  } else {
+    for (const nextScene of (nearbyScenes[location] ?? []).slice(0, 2)) {
+      if (scenes[nextScene]?.image) names.push(scenes[nextScene].image);
+    }
+  }
+  for (const name of new Set(names)) preloadSceneImage(name);
+}
 
 function notify(message) {
   byId('notice').textContent = message;
@@ -120,6 +154,7 @@ function send(type, extra = {}) {
 function setImage(name) {
   if (image === name) return;
   image = name;
+  byId('scene').fetchPriority = 'high';
   byId('scene').src = asset(name);
   lens.style.backgroundImage = `url("${asset(name)}")`;
   lens.hidden = true;
@@ -189,6 +224,7 @@ function render() {
   const currentLine = dialogue ? lineFor(progress) : null;
   const artwork = currentLine?.[2];
   setImage(artwork?.image ?? (backstageMemory ? scenes.wake.backstageImage : hospitalMemory ? scenes.landing.image : dialogue?.id === 'hand' ? clues.hand.image : scene.image));
+  preloadLikelyNextImages(progress, location);
   byId('scene').alt = artwork?.alt ?? (backstageMemory ? '演出结束后的后台' : hospitalMemory ? '昨晚楼梯口的回忆' : dialogue?.id === 'hand' ? clues.hand.label : scene.label);
   const description = byId('scene-description');
   description.textContent = scene.description ?? '';

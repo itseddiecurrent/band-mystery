@@ -29,7 +29,8 @@ jobs:
           mkdir -p _site/assets/portraits
           cp index.html _site/
           cp -R src _site/src
-          cp assets/*.png _site/assets/
+          cp assets/*.jpg _site/assets/
+          cp assets/arthur-phone-lock-screen.png _site/assets/
           cp assets/portraits/*.webp _site/assets/portraits/
           touch _site/.nojekyll
       - name: Upload site

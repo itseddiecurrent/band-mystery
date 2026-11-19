@@ -1,4 +1,4 @@
-import { characterProfileNames, clues, dialogues, nearbyScenes, purseHotspots, scenes } from './content.mjs';
+import { characterProfileNames, clues, dialogues, lineFor, nearbyScenes, purseHotspots, reviewGroups, scenes, storyTransitions } from './content.mjs';
 import { canSolve } from './evidence_list.mjs';
 
 export const bedrooms = ['band-bedroom', 'miko-lili-bedroom'];
@@ -29,12 +29,12 @@ function record(game, label) {
 
 function showLine(game) {
   const { id, line } = game.progress.dialogue;
-  const [speaker, message] = dialogues[id][line];
+  const [speaker, message] = lineFor(game.progress);
   record(game, speaker ? `${speaker}：「${message}」` : message);
 }
 
-function startDialogue(game, id) {
-  game.progress.dialogue = { id, line: 0 };
+function startDialogue(game, id, line = 0) {
+  game.progress.dialogue = { id, line };
   game.history.push({
     label: `对话 · ${scenes[game.progress.scene].label}`,
     checkpoint: structuredClone(game.progress),
@@ -106,7 +106,7 @@ function applyAction(game, action) {
   };
 
   if (action.type === 'solve') {
-    if (!canSolve(progress, action.suspect)) return unchanged({ notice: '解密失败，请继续调查' });
+    if (progress.dialogue || progress.finished || !canSolve(progress, action.suspect)) return unchanged({ notice: '解密失败，请继续调查' });
     delete progress.visiting;
     delete progress.profilesPending;
     progress.finished = false;
@@ -125,6 +125,13 @@ function applyAction(game, action) {
   if (action.type === 'advance') {
     if (!progress.dialogue) return unchanged();
     const current = progress.dialogue;
+    if (current.id === 'milk' && current.line === 1 && !progress.clues.includes('tony-pillow')) {
+      progress.dialogue = null;
+      progress.pillowReturnScene = 'tony';
+      progress.pillowResumeMilk = true;
+      arrive('tony-memory');
+      return result();
+    }
     if (++current.line < dialogues[current.id].length) {
       showLine(next);
       return result();
@@ -138,6 +145,24 @@ function applyAction(game, action) {
     if (current.id === 'jammer') progress.jammer = 'found';
     if (current.id === 'call-police') progress.policeCalled = true;
     if (current.id === 'danzai-return') progress.danzaiReturned = true;
+    if (Object.hasOwn(reviewGroups, current.id)) {
+      for (const id of reviewGroups[current.id].clues) {
+        if (!progress.clues.includes(id)) collect(next, id);
+      }
+      const reviewed = progress.reviewedGroups ??= [];
+      if (!reviewed.includes(current.id)) reviewed.push(current.id);
+      return result({ notice: '复查完成' });
+    }
+    if (Object.hasOwn(storyTransitions, current.id)) {
+      const [scene, dialogue] = storyTransitions[current.id];
+      arrive(scene, dialogue);
+      return result();
+    }
+    if (current.id === 'kat-miko-private') {
+      progress.finished = true;
+      record(next, '剧情结束');
+      return result({ notice: '剧情结束' });
+    }
     switch (current.id) {
       case 'solve-success':
         arrive('rehearsal', 'rehearsal-arrival');
@@ -149,15 +174,15 @@ function applyAction(game, action) {
         return result({ notice: '已记录：威利的车祸记录、威利手机里的施暴记录' });
       case 'hospital-followup':
         progress.hospitalFollowupDone = true;
+        startDialogue(next, 'hospital-aftermath');
         break;
       case 'miko-text':
-        startDialogue(next, 'miko-memory');
         break;
       case 'miko-memory':
         startDialogue(next, 'hospital-aftermath');
         break;
       case 'hospital-aftermath':
-        collect(next, 'miko-testimony');
+        if (!progress.clues.includes('miko-testimony')) collect(next, 'miko-testimony');
         return result({ notice: '已记录：小柔的证词' });
       case 'opening':
         startDialogue(next, 'opening-backstage');
@@ -170,6 +195,15 @@ function applyAction(game, action) {
         break;
       case 'hand':
         return recordClue(current.id);
+      case 'pillow-observation': {
+        const destination = progress.pillowReturnScene ?? 'tony';
+        const resumeMilk = progress.pillowResumeMilk;
+        delete progress.pillowReturnScene;
+        delete progress.pillowResumeMilk;
+        arrive(destination);
+        if (resumeMilk) startDialogue(next, 'milk', 4);
+        break;
+      }
       case 'milk':
         return recordClue(current.id, { panel: current.id });
       case 'backdoor':
@@ -209,17 +243,41 @@ function applyAction(game, action) {
     return result();
   }
   if (action.type === 'hospital-followup') {
-    if (progress.scene !== 'hospital' || progress.hospitalFollowupDone) return unchanged();
+    if (progress.dialogue || progress.scene !== 'hospital' || progress.hospitalFollowupDone) return unchanged();
     startDialogue(next, 'hospital-followup');
     return result();
   }
   if (action.type === 'miko-text') {
-    if (progress.scene !== 'hospital' || !progress.hospitalFollowupDone) return unchanged();
+    if (progress.dialogue || progress.scene !== 'hospital' || !progress.clues.includes('miko-testimony')) return unchanged();
     if (!progress.clues.includes('miko-text')) collect(next, 'miko-text');
     startDialogue(next, 'miko-text');
     return result({ notice: '已记录：小柔发给威利的短信' });
   }
   if (progress.dialogue || progress.finished) return unchanged();
+  if (action.type === 'recall-pillow') {
+    if (!['tony', 'hospital', 'review'].includes(progress.scene) || !progress.clues.includes('milk')) return unchanged();
+    progress.pillowReturnScene = progress.scene;
+    progress.pillowResumeMilk = false;
+    arrive('tony-memory');
+    return result();
+  }
+  if (action.type === 'tony-pillow') {
+    if (progress.scene !== 'tony-memory') return unchanged();
+    if (!progress.clues.includes('tony-pillow')) collect(next, 'tony-pillow');
+    startDialogue(next, 'pillow-observation');
+    return result({ notice: '已记录：不见的备用枕头' });
+  }
+  if (action.type === 'continue-investigation') {
+    if (progress.scene !== 'hospital' || !progress.clues.includes('miko-testimony')) return unchanged();
+    arrive('police-conclusion', 'police-conclusion');
+    return result();
+  }
+  if (action.type === 'review-group') {
+    if (progress.scene !== 'review' || !Object.hasOwn(reviewGroups, action.group) ||
+        progress.reviewedGroups?.includes(action.group)) return unchanged();
+    startDialogue(next, action.group);
+    return result();
+  }
   if (action.type === 'visit' && visitDestinations(progress).includes(action.scene)) {
     return visit(action.scene);
   }
@@ -314,6 +372,10 @@ function applyAction(game, action) {
       if (!canSearchBedrooms(progress)) break;
       enter(next, 'bedroom-hall');
       return result();
+    case 'bedroom-shoe':
+      if (progress.scene !== 'band-bedroom') break;
+      if (progress.clues.includes('bedroom-shoe')) return unchanged({ panel: 'bedroom-shoe' });
+      return recordClue('bedroom-shoe', { panel: 'bedroom-shoe' });
     case 'miko-purse':
       if (progress.scene === 'miko-lili-bedroom') return unchanged({ panel: 'miko-purse' });
       break;
@@ -424,6 +486,9 @@ function applyAction(game, action) {
 function validProgress(progress) {
   if (!progress || !Object.hasOwn(scenes, progress.scene) ||
       (progress.visiting !== undefined && !Object.hasOwn(nearbyScenes, progress.visiting)) ||
+      (progress.reviewedGroups !== undefined && (!Array.isArray(progress.reviewedGroups) || !progress.reviewedGroups.every(id => Object.hasOwn(reviewGroups, id)))) ||
+      (progress.pillowReturnScene !== undefined && !['tony', 'hospital', 'review'].includes(progress.pillowReturnScene)) ||
+      (progress.pillowResumeMilk !== undefined && typeof progress.pillowResumeMilk !== 'boolean') ||
       !Array.isArray(progress.clues) || !progress.clues.every(id => Object.hasOwn(clues, id)) ||
       (progress.sawTireTracks !== undefined && typeof progress.sawTireTracks !== 'boolean') ||
       (progress.searchedBedrooms !== undefined && (!Array.isArray(progress.searchedBedrooms) ||

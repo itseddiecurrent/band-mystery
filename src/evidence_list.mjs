@@ -18,6 +18,7 @@ export const evidence_list = [
   'hand',
   'arthur-phone',
   'milk',
+  'tony-pillow',
   'lili-testimony',
   'drink',
   'danzai-testimony',
@@ -34,5 +35,7 @@ export function getEvidenceList(progress) {
 }
 
 export function canSolve(progress, suspect) {
-  return suspect === '蛋仔' && getEvidenceList(progress).every(item => item.status === 'found');
+  return suspect === '蛋仔' && progress.scene === 'review' && !progress.dialogue && !progress.finished &&
+    ['review-drinks', 'review-vehicle', 'review-extortion', 'review-feather'].every(id => progress.reviewedGroups?.includes(id)) &&
+    ['tony-pillow', 'miko-testimony', 'tie-clip', 'autopsy', 'drink-analysis', 'vehicle', 'extortion', 'feather', 'danzai-testimony'].every(id => progress.clues.includes(id));
 }

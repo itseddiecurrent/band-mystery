@@ -1,11 +1,11 @@
-import { arthurRelationships, characterProfileNames, clues, dialogues, portrait, profiles, purseHotspots, purseImages, scenes } from './content.mjs';
+import { arthurRelationships, characterProfileNames, clues, dialogues, lineFor, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes } from './content.mjs';
 import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs';
 import { canSolve } from './evidence_list.mjs';
 
 const byId = id => document.getElementById(id);
 const asset = name => new URL('../assets/' + encodeURIComponent(name), import.meta.url).href;
 // Browsers may still have the original opaque PNGs cached at the unversioned URLs.
-const portraitAsset = name => asset(name) + (name === 'kat_doctor.png' ? '?v=orange-hair' : '?v=transparent');
+const portraitAsset = name => asset(name) + (name === 'kat_doctor.png' ? '?v=reference-face' : '?v=transparent');
 const stage = byId('stage');
 const lens = byId('lens');
 const panel = byId('panel');
@@ -117,9 +117,9 @@ function setImage(name) {
   lens.hidden = true;
 }
 
-function setPortrait(speaker) {
+function setPortrait(speaker, dialogueId) {
   const characterImage = byId('portrait');
-  const file = speaker && portrait[speaker];
+  const file = speaker && portraitFor(speaker, dialogueId);
   const url = file ? portraitAsset(file) : null;
   if (characterImage.getAttribute('src') === url) return;
 
@@ -161,7 +161,7 @@ function render() {
   const scene = jammerCloseup ? scenes.fireplace.closeup : scenes[location];
   byId('back').disabled = !game.past.length;
   byId('forward').disabled = !dialogue && !game.future.length;
-  const currentLine = dialogue ? dialogues[dialogue.id][dialogue.line] : null;
+  const currentLine = dialogue ? lineFor(progress) : null;
   const artwork = currentLine?.[2];
   setImage(artwork?.image ?? (backstageMemory ? scenes.wake.backstageImage : hospitalMemory ? scenes.landing.image : dialogue?.id === 'hand' ? clues.hand.image : scene.image));
   byId('scene').alt = artwork?.alt ?? (backstageMemory ? '演出结束后的后台' : hospitalMemory ? '昨晚楼梯口的回忆' : dialogue?.id === 'hand' ? clues.hand.label : scene.label);
@@ -173,10 +173,12 @@ function render() {
   jammerLight.classList.toggle('off', progress.jammer === 'off');
   const [speaker, line] = currentLine ?? [];
   stage.classList.toggle('speaking', backstageMemory || ['willy-crash', 'hand'].includes(dialogue?.id) ? Boolean(speaker) : Boolean(dialogue));
-  stage.classList.toggle('memory', backstageMemory || dialogue?.id === 'opening-memory' || hospitalMemory);
+  stage.classList.toggle('memory', location === 'tony-memory' || Boolean(artwork?.memory) || backstageMemory || dialogue?.id === 'opening-memory' || hospitalMemory || dialogue?.id === 'final-reconstruction');
   stage.classList.toggle('backstage-memory', backstageMemory);
   byId('dialogue').hidden = !dialogue;
-  setPortrait(speaker);
+  setPortrait(speaker, dialogue?.id);
+  stage.classList.toggle('finished', progress.finished);
+  byId('ending').hidden = !progress.finished;
   if (dialogue) {
     byId('speaker').textContent = speaker ?? '';
     byId('line').textContent = line;
@@ -217,14 +219,28 @@ function render() {
   const actions = byId('actions');
   actions.replaceChildren();
   if (inspecting) {
+    if (['tony', 'hospital', 'review'].includes(progress.scene) && progress.clues.includes('milk') && !progress.clues.includes('tony-pillow')) {
+      actions.append(button('回看托尼的睡前回忆', () => send('recall-pillow')));
+    }
     if (progress.scene === 'hospital') {
       if (!progress.clues.includes('willy-phone')) {
         actions.append(button('查看警方调查结果', () => send('hospital')));
       }
       if (!progress.hospitalFollowupDone) {
-        actions.append(button('继续和小柔谈谈', () => send('hospital-followup')));
+        actions.append(button('陪小柔坐一会儿', () => send('hospital-followup')));
       } else if (!progress.clues.includes('miko-text')) {
         actions.append(button('查看小柔发给威利的短信', () => send('miko-text')));
+      }
+    }
+    if (progress.scene === 'hospital' && progress.clues.includes('miko-testimony')) {
+      actions.append(button('离开医院，继续调查', () => send('continue-investigation')));
+    }
+    if (progress.scene === 'review') {
+      for (const [group, { label }] of Object.entries(reviewGroups)) {
+        const completed = progress.reviewedGroups?.includes(group);
+        const control = button(completed ? `${label}（已完成）` : label, () => send('review-group', { group }));
+        control.disabled = completed;
+        actions.append(control);
       }
     }
     if (progress.scene === 'arthur') actions.append(button('去隔间', () => send('tony')));
@@ -250,6 +266,9 @@ function render() {
     if (progress.scene === 'yard' && canEnterCornfield(progress)) {
       actions.append(button('去小柔那里看看', () => send('cornfield')));
     }
+    if (progress.scene === 'band-bedroom') {
+      actions.append(button('查看门口地面', () => send('bedroom-shoe')));
+    }
     if (bedrooms.includes(progress.scene)) {
       actions.append(button('检查房间', () => send('search-bedroom')));
       actions.append(button('回走廊', () => send('return-bedroom-hall')));
@@ -259,7 +278,7 @@ function render() {
       if (progress.policeCalled) actions.append('手机已恢复信号。 ');
       actions.append(button('去后门', () => send('danzai-statement')));
     }
-    if (progress.scene === 'police') actions.append(button('查看领带夹', () => send('inspect-clip')));
+    if (progress.scene === 'police') actions.append(button('询问警方亚瑟状况', () => send('inspect-clip')));
     if (progress.scene === 'clip-detail') actions.append(button('问托尼', () => send('ask-tony-photo')));
     if (progress.scene === 'group-photo' && progress.clues.includes('tie-clip')) {
       actions.append(button('翻看去年夏天的合照', () => send('open-old-photo')));
@@ -359,7 +378,8 @@ function openPanel(kind) {
       card.replaceChildren(image, label);
       grid.append(card);
     }
-    body.append(instruction, warning, grid);
+    const retry = button('重新选择', () => { grid.hidden = false; instruction.hidden = false; warning.hidden = true; });
+    body.append(instruction, warning, grid, retry);
   } else if (kind === 'profiles') {
     title.textContent = '人物档案';
     const grid = document.createElement('div');

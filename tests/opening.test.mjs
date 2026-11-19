@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { access } from 'node:fs/promises';
-import { clues, dialogues, portrait, profiles, purseHotspots, purseImages, scenes } from '../src/content.mjs';
+import { clues, dialogues, lineFor, pendingArtwork, portrait, portraitFor, profiles, purseHotspots, purseImages, reviewGroups, scenes } from '../src/content.mjs';
 import { dispatch, newGame, parseSave, visitDestinations } from '../src/game.mjs';
 
 const step = (game, type) => dispatch(game, { type }).game;
@@ -126,7 +126,22 @@ test('the investigation reaches police arrival with each clue and the device shu
   game = dispatch(awakeScouting, { type: 'visit', scene: 'tony' }).game;
   assert.equal(step(game, 'forward'), game);
   game = step(game, 'milk');
-  for (let line = 1; line < dialogues.milk.length; line++) game = step(game, 'advance');
+  game = step(game, 'advance');
+  assert.equal(game.progress.dialogue.line, 1);
+  game = step(game, 'advance');
+  assert.equal(game.progress.scene, 'tony-memory');
+  assert.equal(game.progress.clues.includes('tony-pillow'), false);
+  assert.equal(step(game, 'advance'), game);
+  assert.equal(step(game, 'backdoor'), game);
+  game = parseSave(JSON.stringify(game));
+  game = step(game, 'tony-pillow');
+  assert.equal(game.progress.dialogue.id, 'pillow-observation');
+  assert.equal(game.progress.clues.at(-1), 'tony-pillow');
+  game = step(parseSave(JSON.stringify(game)), 'advance');
+  assert.equal(game.progress.scene, 'tony');
+  assert.equal(game.progress.dialogue.id, 'milk');
+  assert.equal(game.progress.dialogue.line, 4);
+  while (game.progress.dialogue.line < dialogues.milk.length - 1) game = step(game, 'advance');
   const milk = dispatch(game, { type: 'advance' });
   assert.deepEqual(milk.effect, { notice: '已记录：托尼的牛奶', panel: 'milk' });
   game = milk.game;
@@ -249,7 +264,7 @@ test('the investigation reaches police arrival with each clue and the device shu
   game = finishDialogue(step(game, 'danzai-testimony'));
   assert.equal(game.progress.scene, 'police');
   assert.deepEqual(game.progress.clues, [
-    'glass', 'hand', 'milk', 'lili-testimony', 'drink',
+    'glass', 'hand', 'tony-pillow', 'milk', 'lili-testimony', 'drink',
     ...purseHotspots.map(({ id }) => id), ...cornfieldClues, 'danzai-testimony',
   ]);
   assert.equal(game.history.filter(row => row.label.startsWith('已记录 · ')).length, game.progress.clues.length);
@@ -269,7 +284,9 @@ test('the investigation reaches police arrival with each clue and the device shu
   assert.ok(skippedPhoto.progress.clues.includes('willy-crash'));
   assert.ok(skippedPhoto.progress.clues.includes('willy-phone'));
   assert.deepEqual(parseSave(JSON.stringify(skippedPhoto)), skippedPhoto);
-  assert.equal(finishDialogue(step(skippedPhoto, 'hospital')).progress.scene, 'hospital');
+  const skippedHospital = finishDialogue(step(skippedPhoto, 'hospital'));
+  assert.equal(skippedHospital.progress.scene, 'hospital');
+  assertEndingFromHospital(skippedHospital);
   assert.equal(skippedPhoto.progress.clues.includes('old-photo'), false);
   game = step(game, 'open-old-photo');
   assert.equal(game.progress.scene, 'old-photo');
@@ -280,7 +297,9 @@ test('the investigation reaches police arrival with each clue and the device shu
   assert.equal(game.progress.scene, 'willy-crash');
   assert.equal(game.progress.clues.includes('willy-phone'), false);
   game = finishDialogue(game);
-  assert.equal(finishDialogue(step(game, 'hospital')).progress.scene, 'hospital');
+  const hospital = finishDialogue(step(game, 'hospital'));
+  assert.equal(hospital.progress.scene, 'hospital');
+  assertEndingFromHospital(hospital);
 });
 
 test('refresh resumes the exact line and rewind keeps history without future clues', () => {
@@ -349,4 +368,130 @@ test('the opening moves from the memory back to the present before opening the c
   assert.equal(step(ready, 'phone').progress.dialogue.id, 'phone');
   assert.deepEqual(profiles.map(([name]) => name), ['洛克', '托尼', '小莉', '亚瑟', '蛋仔', '小柔', '威利', '凯特医生']);
   assert.ok(profiles.every(([name]) => Object.hasOwn(portrait, name)));
+});
+
+test('hospital visit completes through companionship and keeps the text message optional', () => {
+  let game = newGame();
+  game.progress = { ...game.progress, scene: 'hospital', dialogue: { id: 'hospital-arrival', line: 0 } };
+  assert.equal(step(game, 'hospital-followup'), game);
+  assert.equal(step(game, 'miko-text'), game);
+  game = finishDialogue(game);
+  assert.equal(game.progress.clues.includes('miko-testimony'), false);
+  game = step(game, 'hospital-followup');
+  game = step(game, 'advance');
+  game = parseSave(JSON.stringify(game));
+  assert.equal(game.progress.dialogue.id, 'hospital-followup');
+  assert.equal(step(game, 'miko-text'), game);
+  game = finishDialogue(game);
+  assert.equal(game.progress.hospitalFollowupDone, true);
+  assert.deepEqual(game.progress.clues, ['miko-testimony']);
+  assert.equal(step(game, 'hospital-followup'), game);
+  const visitHistory = game.history.map(row => row.label).join('\n');
+  assert.ok(visitHistory.includes('洛克留在床边，没有再问。'));
+  assert.ok(!visitHistory.includes('电话是怎么断的'));
+  game = finishDialogue(step(game, 'miko-text'));
+  assert.deepEqual(game.progress.clues, ['miko-testimony', 'miko-text']);
+  assert.equal(game.history.some(row => row.checkpoint?.dialogue.id === 'miko-memory'), false);
+  game = finishDialogue(step(game, 'miko-text'));
+  assert.equal(game.progress.clues.filter(id => id === 'miko-testimony').length, 1);
+  assert.equal(game.progress.clues.filter(id => id === 'miko-text').length, 1);
+});
+
+
+function assertEndingFromHospital(game) {
+  game = finishDialogue(step(game, 'hospital-followup'));
+  game = finishDialogue(step(game, 'continue-investigation'));
+  assert.equal(game.progress.scene, 'review');
+  assert.equal(step(game, 'solve'), game);
+  for (const group of Object.keys(reviewGroups)) {
+    game = dispatch(game, { type: 'review-group', group }).game;
+    game = finishDialogue(parseSave(JSON.stringify(game)));
+    assert.equal(dispatch(game, { type: 'review-group', group }).game, game);
+  }
+  assert.equal(dispatch(game, { type: 'solve', suspect: '威利' }).game, game);
+  game = dispatch(game, { type: 'solve', suspect: '蛋仔' }).game;
+  const order = [];
+  let sawFinalSilence = false;
+  for (let n = 0; n < 180 && !game.progress.finished; n++) {
+    assert.ok(game.progress.dialogue, 'the main story must never stall after accusation');
+    const { id, line } = game.progress.dialogue;
+    if (order.at(-1) !== id) {
+      order.push(id);
+      game = parseSave(JSON.stringify(game));
+      assert.ok(game);
+    }
+    if (id === 'sunset') {
+      assert.equal(game.progress.finished, false);
+      const words = lineFor(game.progress)[1];
+      if (!game.progress.clues.includes('old-photo')) assert.equal(words.includes('合照里我们都穿'), false);
+    }
+    if (id === 'kat-miko-private' && line === dialogues[id].length - 1) {
+      assert.equal(lineFor(game.progress)[1], '。。。');
+      assert.equal(game.progress.finished, false);
+      sawFinalSilence = true;
+    }
+    game = step(game, 'advance');
+  }
+  assert.equal(game.progress.finished, true);
+  assert.equal(sawFinalSilence, true);
+  assert.deepEqual(order, ['solve-success', 'rehearsal-arrival', 'confrontation', 'final-reconstruction', 'arrest', 'sunset', 'kat-miko-private']);
+  const restored = parseSave(JSON.stringify(game));
+  assert.equal(restored.progress.finished, true);
+  const previous = step(restored, 'back');
+  assert.equal(previous.progress.finished, false);
+  assert.equal(previous.progress.dialogue.id, 'kat-miko-private');
+  assert.equal(step(previous, 'forward').progress.finished, true);
+}
+
+test('all report orders unlock accusation without optional clues', () => {
+  const permutations = values => values.length ? values.flatMap((value, i) => permutations(values.filter((_, j) => j !== i)).map(rest => [value, ...rest])) : [[]];
+  for (const order of permutations(Object.keys(reviewGroups))) {
+    let game = newGame();
+    game.progress = { ...game.progress, scene: 'review', dialogue: null, clues: ['tony-pillow', 'miko-testimony', 'tie-clip', 'danzai-testimony'] };
+    for (const group of order) game = finishDialogue(dispatch(game, { type: 'review-group', group }).game);
+    const result = dispatch(game, { type: 'solve', suspect: '蛋仔' }).game;
+    assert.equal(result.progress.dialogue.id, 'solve-success');
+    assert.equal(result.progress.clues.includes('old-photo'), false);
+    assert.equal(result.progress.clues.includes('arthur-phone'), false);
+  }
+});
+
+test('flashbacks reserve pending images and Danzai changes clothes after the murder', async () => {
+  assert.equal(Object.keys(pendingArtwork).length, 3);
+  for (const shot of Object.values(pendingArtwork)) {
+    assert.ok(['pending', 'generated'].includes(shot.status));
+    if (shot.status === 'pending') assert.notEqual(shot.image, shot.target);
+    else assert.equal(shot.image, shot.target);
+    await access(new URL('../assets/' + shot.image, import.meta.url));
+  }
+  assert.equal(portraitFor('蛋仔', 'opening-backstage'), '蛋仔.png');
+  assert.equal(portraitFor('蛋仔', 'final-reconstruction'), '蛋仔.png');
+  for (const id of ['danzai-return', 'danzai-testimony', 'confrontation', 'arrest']) {
+    assert.equal(portraitFor('蛋仔', id), '蛋仔-便装.png');
+  }
+  assert.ok(dialogues.milk.some(row => row[2]?.target === pendingArtwork['tony-before-sleep'].target && row[2].memory));
+  assert.ok(dialogues['hospital-followup'].some(row => row[2]?.target === pendingArtwork['arthur-fall'].target && row[2].memory));
+  assert.ok(dialogues['final-reconstruction'].some(row => row[2]?.pendingAsset === 'danzai-pillow-murder'));
+});
+
+
+test('old saves can revisit the pillow memory and accusation requires the pillow clue', () => {
+  let game = newGame();
+  game.progress = { ...game.progress, scene: 'review', dialogue: null,
+    clues: ['milk', 'miko-testimony', 'tie-clip', 'danzai-testimony', 'autopsy', 'drink-analysis', 'vehicle', 'extortion', 'feather'],
+    reviewedGroups: Object.keys(reviewGroups) };
+  assert.equal(dispatch(game, { type: 'solve', suspect: '蛋仔' }).game, game);
+  game = step(game, 'recall-pillow');
+  assert.equal(game.progress.scene, 'tony-memory');
+  assert.equal(step(game, 'forward'), game);
+  const before = structuredClone(game.progress);
+  game = step(game, 'tony-pillow');
+  assert.equal(lineFor(game.progress)[1], '托尼记得当时床上还有一个枕头,现在不知道去哪里了。算了不重要。');
+  assert.deepEqual(step(game, 'back').progress, before);
+  game = step(game, 'advance');
+  assert.equal(game.progress.scene, 'review');
+  assert.equal(game.progress.dialogue, null);
+  game = finishDialogue(step(step(game, 'recall-pillow'), 'tony-pillow'));
+  assert.equal(game.progress.clues.filter(id => id === 'tony-pillow').length, 1);
+  assert.equal(dispatch(game, { type: 'solve', suspect: '蛋仔' }).game.progress.dialogue.id, 'solve-success');
 });

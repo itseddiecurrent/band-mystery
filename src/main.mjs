@@ -95,15 +95,14 @@ async function loadGameImages() {
   const continueButton = byId('asset-continue');
   let failed = await warmImageCache(urls, loaded);
 
-  const finish = async () => {
+  const finish = () => {
     const title = byId('cover-art');
     title.src = asset('title-screen.png');
-    await Promise.all([
-      title.decode().catch(() => false),
-      portraitCache.preload([...Object.values(portrait), '蛋仔.png']),
-      decodeImageUrl(asset(scenes.wake.image)),
-      decodeImageUrl(asset(scenes.wake.backstageImage)),
-    ]);
+    // The invite form should never wait on Chrome's image decoder after all bytes are cached.
+    title.decode().catch(() => false);
+    portraitCache.preload([...Object.values(portrait), '蛋仔.png']);
+    decodeImageUrl(asset(scenes.wake.image));
+    decodeImageUrl(asset(scenes.wake.backstageImage));
     byId('invite-code').disabled = false;
     byId('invite-submit').disabled = false;
     byId('title').inert = false;

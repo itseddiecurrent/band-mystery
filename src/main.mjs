@@ -3,9 +3,10 @@ import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, pars
 import { canSolve } from './evidence_list.mjs';
 
 const byId = id => document.getElementById(id);
-const asset = name => new URL('../assets/' + encodeURIComponent(name), import.meta.url).href;
+// Refresh URLs after the custom-domain rollback so browsers do not reuse cached redirects.
+const asset = name => new URL('../assets/' + encodeURIComponent(name), import.meta.url).href + '?v=pages-recovery-1';
 // Browsers may still have the original opaque PNGs cached at the unversioned URLs.
-const portraitAsset = name => asset(name) + (name === 'kat_doctor.png' ? '?v=reference-face' : '?v=transparent');
+const portraitAsset = name => asset(name) + (name === 'kat_doctor.png' ? '&portrait=reference-face' : '&portrait=transparent');
 const stage = byId('stage');
 const lens = byId('lens');
 const panel = byId('panel');

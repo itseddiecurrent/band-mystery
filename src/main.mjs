@@ -10,6 +10,11 @@ const stage = byId('stage');
 const lens = byId('lens');
 const panel = byId('panel');
 const SESSION_KEY = 'band-mystery.web-session.v1';
+const INVITE_CODE = 'BANDMYSTERY902';
+const INVITE_KEY = 'band-mystery.invite.v1';
+let accessGranted = false;
+try { accessGranted = sessionStorage.getItem(INVITE_KEY) === 'granted'; } catch {}
+
 let sessionId = null;
 let game = null;
 let saved = null;
@@ -98,6 +103,7 @@ function save() {
 }
 
 function send(type, extra = {}) {
+  if (!accessGranted || !game) return;
   const previous = game;
   const result = dispatch(game, { type, ...extra });
   notify(result.effect?.notice ?? '');
@@ -142,6 +148,17 @@ function setPortrait(speaker, dialogueId) {
 }
 
 function render() {
+  byId('invite-form').hidden = accessGranted;
+  byId('cover-actions').hidden = !accessGranted;
+  byId('new').disabled = !accessGranted;
+  byId('continue').disabled = !accessGranted;
+  if (!accessGranted) {
+    byId('title').hidden = false;
+    byId('game-header').hidden = true;
+    byId('tools').hidden = true;
+    byId('game').hidden = true;
+    return;
+  }
   byId('continue').hidden = !saved;
   byId('title').hidden = Boolean(game);
   byId('game-header').hidden = !game;
@@ -486,7 +503,26 @@ panel.addEventListener('close', () => {
   if (game?.progress.profilesPending && !panel.open) send('dismiss-profiles');
 });
 
+byId('invite-form').onsubmit = event => {
+  event.preventDefault();
+  const input = byId('invite-code');
+  if (input.value.trim() !== INVITE_CODE) {
+    byId('invite-error').hidden = false;
+    input.setAttribute('aria-invalid', 'true');
+    input.focus();
+    input.select();
+    return;
+  }
+  accessGranted = true;
+  try { sessionStorage.setItem(INVITE_KEY, 'granted'); } catch {}
+  input.value = '';
+  input.removeAttribute('aria-invalid');
+  byId('invite-error').hidden = true;
+  render();
+  byId(saved ? 'continue' : 'new').focus();
+};
 byId('new').onclick = () => {
+  if (!accessGranted) return;
   if (saved && !confirm('开始新游戏会覆盖本次进度和记录。继续吗？')) return;
   notify('');
   game = newGame();
@@ -494,7 +530,7 @@ byId('new').onclick = () => {
   render();
 };
 byId('continue').onclick = () => {
-  if (!saved) return;
+  if (!accessGranted || !saved) return;
   game = saved;
   render();
 };

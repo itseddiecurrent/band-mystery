@@ -4,11 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>乐队酒局杀人事件</title>
-  <link rel="stylesheet" href="./src/style.css?v=portrait-cache-1">
-  <script type="module" src="./src/main.mjs?v=portrait-cache-1"></script>
+  <link rel="stylesheet" href="./src/style.css?v=asset-loader-1">
+  <script type="module" src="./src/main.mjs?v=asset-loader-1"></script>
 </head>
 <body>
   <main>
+    <section id="asset-loader" aria-label="正在加载游戏图片">
+      <div class="asset-loader-card">
+        <h1>正在准备游戏</h1>
+        <p id="asset-load-status" role="status" aria-live="polite">正在缓存游戏图片…</p>
+        <progress id="asset-progress" max="1" value="0" aria-label="图片加载进度"></progress>
+        <p id="asset-load-count">0 / 0</p>
+        <div id="asset-load-actions" hidden>
+          <p id="asset-load-error" role="alert"></p>
+          <button id="asset-retry" type="button">重试未加载的图片</button>
+          <button id="asset-continue" type="button">继续进入游戏</button>
+        </div>
+      </div>
+    </section>
     <header id="game-header" hidden>
       <p class="game-name">乐队酒局杀人事件</p>
       <nav id="tools" aria-label="游戏工具" hidden>
@@ -20,14 +33,14 @@
         <button id="exit">退出</button>
       </nav>
     </header>
-    <section id="title" aria-labelledby="cover-title">
-      <img class="cover-art" src="./assets/title-screen.jpg?v=scene-images-1" alt="">
+    <section id="title" aria-labelledby="cover-title" inert>
+      <img id="cover-art" class="cover-art" alt="">
       <div class="cover-menu">
         <h1 id="cover-title">乐队酒局<wbr>杀人事件</h1>
         <form id="invite-form">
           <label for="invite-code">输入邀请码</label>
-          <input id="invite-code" name="invite-code" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required aria-describedby="invite-error">
-          <button type="submit">进入游戏</button>
+          <input id="invite-code" name="invite-code" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required aria-describedby="invite-error" disabled>
+          <button id="invite-submit" type="submit" disabled>进入游戏</button>
           <p id="invite-error" role="alert" hidden>邀请码不正确，请重试。</p>
         </form>
         <div id="cover-actions" class="cover-actions" hidden>

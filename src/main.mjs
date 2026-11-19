@@ -9,6 +9,7 @@ const assetFilename = name => name === 'arthur-phone-lock-screen.png' ? name : n
 const asset = name => new URL('../assets/' + assetFilename(name).split('/').map(encodeURIComponent).join('/'), import.meta.url).href + '?v=scene-images-1';
 const portraitAsset = name => asset(portraitFilename(name));
 const portraitCache = createPortraitCache(portraitAsset);
+const loader = byId('asset-loader');
 const stage = byId('stage');
 const lens = byId('lens');
 const panel = byId('panel');
@@ -25,6 +26,116 @@ let lensEnabled = false;
 let image = null;
 let portraitTarget = null;
 const preloadedSceneImages = new Map();
+
+function collectArtworkFiles(value, files, seen = new WeakSet()) {
+  if (!value || typeof value !== 'object' || seen.has(value)) return;
+  seen.add(value);
+  if (Array.isArray(value)) {
+    for (const item of value) collectArtworkFiles(item, files, seen);
+    return;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    if (typeof child === 'string' && child.endsWith('.png')) files.add(asset(child));
+    collectArtworkFiles(child, files, seen);
+  }
+}
+
+function gameImageUrls() {
+  const files = new Set([asset('title-screen.png'), asset('bitcoin-wallet.png'), asset('danzai-flashback.png')]);
+  for (const content of [scenes, dialogues, clues, purseImages]) collectArtworkFiles(content, files);
+  return [...files, ...new Set([...Object.values(portrait), '蛋仔.png'].map(portraitAsset))];
+}
+
+function updateAssetProgress(done, total) {
+  byId('asset-progress').max = total;
+  byId('asset-progress').value = done;
+  byId('asset-load-count').textContent = `${done} / ${total}`;
+}
+
+function decodeImageUrl(url) {
+  const warmed = new Image();
+  warmed.decoding = 'async';
+  warmed.src = url;
+  return warmed.decode().catch(() => false);
+}
+
+async function warmImageCache(urls, loaded, total = urls.length) {
+  let cursor = 0;
+  const failed = new Set();
+  updateAssetProgress(loaded.size, total);
+  const worker = async () => {
+    while (cursor < urls.length) {
+      const url = urls[cursor++];
+      if (loaded.has(url)) continue;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 45000);
+      try {
+        const response = await fetch(url, { cache: 'force-cache', credentials: 'same-origin', signal: controller.signal });
+        if (!response.ok) throw new Error(`Image request failed: ${response.status}`);
+        await response.blob();
+        loaded.add(url);
+      } catch {
+        failed.add(url);
+      } finally {
+        clearTimeout(timeout);
+      }
+      updateAssetProgress(loaded.size, total);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(3, urls.length) }, worker));
+  return failed;
+}
+
+async function loadGameImages() {
+  const urls = gameImageUrls();
+  const loaded = new Set();
+  const status = byId('asset-load-status');
+  const actions = byId('asset-load-actions');
+  const failureMessage = byId('asset-load-error');
+  const retryButton = byId('asset-retry');
+  const continueButton = byId('asset-continue');
+  let failed = await warmImageCache(urls, loaded);
+
+  const finish = async () => {
+    status.textContent = '正在准备开场画面和角色立绘…';
+    const title = byId('cover-art');
+    title.src = asset('title-screen.png');
+    await Promise.all([
+      title.decode().catch(() => false),
+      portraitCache.preload([...Object.values(portrait), '蛋仔.png']),
+      decodeImageUrl(asset(scenes.wake.image)),
+      decodeImageUrl(asset(scenes.wake.backstageImage)),
+    ]);
+    byId('invite-code').disabled = false;
+    byId('invite-submit').disabled = false;
+    byId('title').inert = false;
+    loader.hidden = true;
+  };
+
+  if (!failed.size) {
+    await finish();
+    return;
+  }
+
+  const showFailure = () => {
+    status.textContent = '部分图片暂时无法载入';
+    failureMessage.textContent = `${failed.size} 张图片加载失败。网络恢复后可重试，也可以先进入游戏。`;
+    actions.hidden = false;
+  };
+  showFailure();
+  retryButton.onclick = async () => {
+    retryButton.disabled = true;
+    continueButton.disabled = true;
+    actions.hidden = true;
+    const retryUrls = [...failed];
+    failed = await warmImageCache(retryUrls, loaded, urls.length);
+    retryButton.disabled = false;
+    continueButton.disabled = false;
+    if (failed.size) showFailure();
+    else await finish();
+  };
+  continueButton.onclick = finish;
+}
 
 function preloadSceneImage(name) {
   if (!name || name === image || preloadedSceneImages.has(name)) return;
@@ -633,7 +744,6 @@ function placeLens(event) {
 stage.addEventListener('pointerdown', placeLens);
 stage.addEventListener('pointermove', placeLens);
 stage.addEventListener('pointerleave', () => { lens.hidden = true; });
-// Warm every portrait while the invite/title screen is visible, before dialogue.
-portraitCache.preload([...Object.values(portrait), '蛋仔.png']);
 initializeSession();
 render();
+loadGameImages();

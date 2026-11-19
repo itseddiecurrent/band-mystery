@@ -19,6 +19,20 @@ main {
 main > header { grid-row: 1; }
 #title, #game { grid-row: 2; min-height: 0; }
 #notice { grid-row: 3; }
+#asset-loader {
+  position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center;
+  box-sizing: border-box; padding: 1.25rem; background: #111014;
+}
+.asset-loader-card {
+  width: min(28rem, 100%); box-sizing: border-box; padding: clamp(1.25rem, 5vw, 2rem);
+  border: 1px solid #51434a; background: #1b171d; box-shadow: 0 1rem 4rem #0008;
+}
+.asset-loader-card h1 { margin: 0 0 .6rem; color: #e65450; font-size: clamp(1.25rem, 5vw, 1.75rem); }
+.asset-loader-card p { margin: .55rem 0; color: #d5cbd0; }
+#asset-progress { display: block; width: 100%; height: .9rem; margin: 1.1rem 0 .5rem; accent-color: #e65450; }
+#asset-load-count { text-align: right; font-variant-numeric: tabular-nums; }
+#asset-load-actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1rem; }
+#asset-load-actions p { flex-basis: 100%; }
 header, nav { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; }
 header { justify-content: space-between; margin-bottom: .8rem; }
 .game-name { font-size: clamp(1rem, 3vw, 1.6rem); letter-spacing: .09em; margin: .5rem 0; }

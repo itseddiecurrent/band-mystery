@@ -89,7 +89,6 @@ async function warmImageCache(urls, loaded, total = urls.length) {
 async function loadGameImages() {
   const urls = gameImageUrls();
   const loaded = new Set();
-  const status = byId('asset-load-status');
   const actions = byId('asset-load-actions');
   const failureMessage = byId('asset-load-error');
   const retryButton = byId('asset-retry');
@@ -97,7 +96,6 @@ async function loadGameImages() {
   let failed = await warmImageCache(urls, loaded);
 
   const finish = async () => {
-    status.textContent = '正在准备开场画面和角色立绘…';
     const title = byId('cover-art');
     title.src = asset('title-screen.png');
     await Promise.all([
@@ -118,7 +116,6 @@ async function loadGameImages() {
   }
 
   const showFailure = () => {
-    status.textContent = '部分图片暂时无法载入';
     failureMessage.textContent = `${failed.size} 张图片加载失败。网络恢复后可重试，也可以先进入游戏。`;
     actions.hidden = false;
   };

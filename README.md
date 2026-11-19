@@ -73,3 +73,7 @@
 推送到 `main` 后，`.github/workflows/deploy-pages.yml` 先运行测试，再发布 `index.html`、`src/` 与 PNG 素材；剧本文档和生成提示词不放入部署产物。仓库 Pages 的发布方式设为 GitHub Actions。
 
 进入游戏前需要输入硬编码邀请码。验证结果保存在当前标签页的 `sessionStorage`，刷新无需重复输入。此入口仅用于便捷邀请，不提供服务端身份验证；公开仓库与客户端源码中可以读取邀请码。
+
+## 立绘加载
+
+角色立绘使用 `assets/portraits/` 内的 WebP，保留原 PNG 作为制作源图。标题页预加载并解码全部九张立绘，发言切换时复用已解码的图片节点。更新立绘后运行 `sh scripts/optimize-portraits.sh` 重新生成（需要 `cwebp`），一并提交 WebP 文件。

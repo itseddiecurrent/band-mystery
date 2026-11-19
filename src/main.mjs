@@ -1,12 +1,13 @@
 import { arthurRelationships, characterProfileNames, clues, dialogues, lineFor, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes } from './content.mjs';
 import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs';
 import { canSolve } from './evidence_list.mjs';
+import { createPortraitCache, portraitFilename } from './portrait-cache.mjs';
 
 const byId = id => document.getElementById(id);
 // Refresh URLs after the custom-domain rollback so browsers do not reuse cached redirects.
-const asset = name => new URL('../assets/' + encodeURIComponent(name), import.meta.url).href + '?v=pages-recovery-1';
-// Browsers may still have the original opaque PNGs cached at the unversioned URLs.
-const portraitAsset = name => asset(name) + (name === 'kat_doctor.png' ? '&portrait=reference-face' : '&portrait=transparent');
+const asset = name => new URL('../assets/' + name.split('/').map(encodeURIComponent).join('/'), import.meta.url).href + '?v=pages-recovery-1';
+const portraitAsset = name => asset(portraitFilename(name));
+const portraitCache = createPortraitCache(portraitAsset);
 const stage = byId('stage');
 const lens = byId('lens');
 const panel = byId('panel');
@@ -21,7 +22,7 @@ let game = null;
 let saved = null;
 let lensEnabled = false;
 let image = null;
-let portraitDecode = null;
+let portraitTarget = null;
 
 function notify(message) {
   byId('notice').textContent = message;
@@ -125,27 +126,33 @@ function setImage(name) {
 }
 
 function setPortrait(speaker, dialogueId) {
-  const characterImage = byId('portrait');
+  const current = byId('portrait');
   const file = speaker && portraitFor(speaker, dialogueId);
-  const url = file ? portraitAsset(file) : null;
-  if (characterImage.getAttribute('src') === url) return;
-
-  // A browser can keep painting the old image while the new source loads.
-  characterImage.hidden = true;
-  portraitDecode = null;
-  if (!url) {
-    characterImage.removeAttribute('src');
+  if (!file) {
+    portraitTarget = null;
+    current.hidden = true;
     return;
   }
-
-  characterImage.src = url;
-  const request = characterImage.decode();
-  portraitDecode = request;
-  request.then(() => {
-    if (portraitDecode === request) characterImage.hidden = false;
-  }, () => {
-    // Leave the portrait hidden if the image fails to load.
-  });
+  const entry = portraitCache.get(file);
+  portraitTarget = entry;
+  const show = () => {
+    // Ignore a decode finishing after the player has advanced to another line.
+    if (portraitTarget !== entry || !entry.loaded) return;
+    const previous = byId('portrait');
+    entry.image.id = 'portrait';
+    entry.image.hidden = false;
+    if (previous !== entry.image) {
+      previous.hidden = true;
+      previous.replaceWith(entry.image);
+    }
+  };
+  if (entry.loaded) {
+    show();
+  } else {
+    current.hidden = true;
+    entry.image.fetchPriority = 'high';
+    entry.ready.then(show);
+  }
 }
 
 function render() {
@@ -590,5 +597,7 @@ function placeLens(event) {
 stage.addEventListener('pointerdown', placeLens);
 stage.addEventListener('pointermove', placeLens);
 stage.addEventListener('pointerleave', () => { lens.hidden = true; });
+// Warm every portrait while the invite/title screen is visible, before dialogue.
+portraitCache.preload([...Object.values(portrait), '蛋仔.png']);
 initializeSession();
 render();

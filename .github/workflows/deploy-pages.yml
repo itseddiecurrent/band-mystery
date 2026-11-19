@@ -23,13 +23,14 @@ jobs:
         with:
           node-version: '24'
       - name: Test game
-        run: node --test tests/opening.test.mjs
+        run: node --test
       - name: Prepare static site
         run: |
-          mkdir -p _site/assets
+          mkdir -p _site/assets/portraits
           cp index.html _site/
           cp -R src _site/src
-          find assets -maxdepth 1 -type f -name '*.png' -exec cp {} _site/assets/ \;
+          cp assets/*.png _site/assets/
+          cp assets/portraits/*.webp _site/assets/portraits/
           touch _site/.nojekyll
       - name: Upload site
         uses: actions/upload-pages-artifact@v4

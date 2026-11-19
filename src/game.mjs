@@ -1,4 +1,5 @@
 import { characterProfileNames, clues, dialogues, nearbyScenes, purseHotspots, scenes } from './content.mjs';
+import { canSolve } from './evidence_list.mjs';
 
 export const bedrooms = ['band-bedroom', 'miko-lili-bedroom'];
 
@@ -104,6 +105,15 @@ function applyAction(game, action) {
     return result();
   };
 
+  if (action.type === 'solve') {
+    if (!canSolve(progress, action.suspect)) return unchanged({ notice: '解密失败，请继续调查' });
+    delete progress.visiting;
+    delete progress.profilesPending;
+    progress.finished = false;
+    startDialogue(next, 'solve-success');
+    return result();
+  }
+
   if (action.type === 'rewind') {
     const checkpoint = next.history[action.index]?.checkpoint;
     if (!checkpoint) return unchanged();
@@ -129,6 +139,14 @@ function applyAction(game, action) {
     if (current.id === 'call-police') progress.policeCalled = true;
     if (current.id === 'danzai-return') progress.danzaiReturned = true;
     switch (current.id) {
+      case 'solve-success':
+        arrive('rehearsal', 'rehearsal-arrival');
+        break;
+      case 'willy-crash':
+        for (const id of ['willy-crash', 'willy-phone']) {
+          if (!progress.clues.includes(id)) collect(next, id);
+        }
+        return result({ notice: '已记录：威利的车祸记录、威利手机里的施暴记录' });
       case 'hospital-followup':
         progress.hospitalFollowupDone = true;
         break;
@@ -209,6 +227,11 @@ function applyAction(game, action) {
     return unchanged({ notice: '喝了一半的饮料，没什么特别' });
   }
   const revisitingArthur = progress.scene === 'tony' && progress.visiting === 'arthur';
+  if (action.type === 'hand' &&
+      (revisitingArthur || (progress.scene === 'arthur' && !progress.visiting))) {
+    if (progress.clues.includes('hand')) return unchanged({ panel: 'hand' });
+    return recordClue('hand', { panel: 'hand' });
+  }
   if (action.type === 'arthur-phone' && progress.examined &&
       (revisitingArthur || (progress.scene === 'arthur' && !progress.visiting))) {
     if (progress.clues.includes('arthur-phone')) return unchanged({ panel: 'arthur-phone' });
@@ -220,7 +243,6 @@ function applyAction(game, action) {
       startDialogue(next, 'examination');
       return result();
     }
-    if (action.type === 'hand' && progress.clues.includes('hand')) return unchanged({ panel: 'hand' });
   }
   if (progress.visiting) return unchanged();
 
@@ -250,15 +272,9 @@ function applyAction(game, action) {
       if (progress.scene !== 'arthur' || progress.examined) break;
       startDialogue(next, 'examination');
       return result();
-    case 'hand':
-      if (progress.scene !== 'arthur') break;
-      if (!progress.examined) return unchanged({ notice: '亚瑟的右手紧握着。' });
-      if (progress.clues.includes('hand')) return unchanged({ panel: 'hand' });
-      startDialogue(next, 'hand');
-      return result();
     case 'tony':
       if (progress.scene !== 'arthur') break;
-      if (!progress.clues.includes('hand')) return visit('tony');
+      if (!progress.examined || !progress.clues.includes('hand')) return visit('tony');
       arrive('tony', 'tony-arrival');
       return result();
     case 'wake-tony':
@@ -392,7 +408,13 @@ function applyAction(game, action) {
       collect(next, 'old-photo');
       return result({ panel: 'old-photo' });
     case 'hospital':
-      if (!['group-photo', 'old-photo'].includes(progress.scene) || !progress.clues.includes('tie-clip')) break;
+      if (!['group-photo', 'old-photo', 'willy-crash', 'hospital'].includes(progress.scene) ||
+          !progress.clues.includes('tie-clip')) break;
+      if (!progress.clues.includes('willy-phone')) {
+        arrive('willy-crash', 'willy-crash');
+        return result();
+      }
+      if (progress.scene === 'hospital') break;
       arrive('hospital', 'hospital-arrival');
       return result();
   }

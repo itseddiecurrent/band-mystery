@@ -211,6 +211,66 @@ dialog li { padding: .25rem 0; }
 .cast-grid h3 { margin: .5rem 0 .25rem; color: #f0be86; }
 .cast-grid p { margin: .3rem 0; line-height: 1.45; }
 
+.suspect-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  flex: 1;
+  min-height: 0;
+  gap: .5rem;
+}
+.suspect-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: .3rem;
+  background: #302630;
+  border: 1px solid #574752;
+}
+.suspect-card img {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  height: 0;
+  object-fit: cover;
+  object-position: center top;
+}
+.suspect-card span { display: block; margin-top: .4rem; }
+.suspect-card:hover, .suspect-card:focus-visible { border-color: #f0be86; }
+.solve-panel {
+  width: min(36rem, 94vw);
+  height: min(40rem, calc(100dvh - 2rem));
+  padding: .75rem;
+  overflow: hidden;
+}
+.solve-panel[open] {
+  display: flex;
+  flex-direction: column;
+}
+.solve-panel form { position: absolute; top: .75rem; right: .75rem; }
+.solve-panel h2 { margin: .25rem 4rem .7rem 0; flex-shrink: 0; }
+.solve-panel #panel-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.solve-panel #panel-body > p { margin: 0 0 .6rem; }
+.solve-warning {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  color: #ff4444;
+  font-size: clamp(2rem, 7vw, 5rem);
+  font-weight: 800;
+  text-align: center;
+}
+@media (max-height: 480px) and (orientation: landscape) {
+  .solve-panel { width: min(44rem, 94vw); }
+  .suspect-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+}
+
 .character-profile {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);

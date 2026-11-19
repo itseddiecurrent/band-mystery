@@ -43,7 +43,11 @@ test('opening gates must be met and clues only enter the notebook once', () => {
   assert.equal(game.history.at(-1).label, '查看亚瑟的人物档案');
   assert.equal(step(game, 'dismiss-profiles'), game);
   assert.equal(step(step(game, 'back'), 'forward').progress.profilesPending, undefined);
-  assert.equal(step(game, 'hand'), game);
+  const earlyHand = dispatch(game, { type: 'hand' });
+  assert.equal(earlyHand.effect.panel, 'hand');
+  assert.equal(earlyHand.game.progress.dialogue, null);
+  assert.ok(earlyHand.game.progress.clues.includes('hand'));
+  assert.deepEqual(dispatch(earlyHand.game, { type: 'hand' }), { game: earlyHand.game, effect: { panel: 'hand' } });
   visitWithoutAdvancing(game, 'tony', 'tony');
   game = finishDialogue(step(game, 'body'));
   game = finishDialogue(step(game, 'hand'));
@@ -261,13 +265,21 @@ test('the investigation reaches police arrival with each clue and the device shu
   assert.equal(game.progress.clues.at(-1), 'tie-clip');
   assert.equal(step(game, 'compare-clip'), game);
   const skippedPhoto = finishDialogue(step(game, 'hospital'));
-  assert.equal(skippedPhoto.progress.scene, 'hospital');
+  assert.equal(skippedPhoto.progress.scene, 'willy-crash');
+  assert.ok(skippedPhoto.progress.clues.includes('willy-crash'));
+  assert.ok(skippedPhoto.progress.clues.includes('willy-phone'));
+  assert.deepEqual(parseSave(JSON.stringify(skippedPhoto)), skippedPhoto);
+  assert.equal(finishDialogue(step(skippedPhoto, 'hospital')).progress.scene, 'hospital');
   assert.equal(skippedPhoto.progress.clues.includes('old-photo'), false);
   game = step(game, 'open-old-photo');
   assert.equal(game.progress.scene, 'old-photo');
   game = step(game, 'record-old-photo');
   assert.equal(step(game, 'record-old-photo'), game);
   assert.equal(game.progress.clues.at(-1), 'old-photo');
+  game = step(game, 'hospital');
+  assert.equal(game.progress.scene, 'willy-crash');
+  assert.equal(game.progress.clues.includes('willy-phone'), false);
+  game = finishDialogue(game);
   assert.equal(finishDialogue(step(game, 'hospital')).progress.scene, 'hospital');
 });
 
@@ -290,8 +302,9 @@ test('refresh resumes the exact line and rewind keeps history without future clu
 
 test('investigation artwork resolves on disk', async () => {
   const clueImages = Object.values(clues).map(clue => clue.image).filter(Boolean);
+  const dialogueImages = Object.values(dialogues).flat().map(([, , artwork]) => artwork?.image).filter(Boolean);
   const filenames = [...Object.values(scenes).map(scene => scene.image), scenes.fireplace.closeup.image, scenes.wake.backstageImage, ...clueImages,
-    ...Object.values(portrait), ...Object.values(purseImages)];
+    ...Object.values(portrait), ...Object.values(purseImages), ...dialogueImages];
   await Promise.all(filenames.map(name => access(new URL('../assets/' + name, import.meta.url))));
 });
 
@@ -334,5 +347,6 @@ test('the opening moves from the memory back to the present before opening the c
   assert.equal(parseSave(JSON.stringify(game)).progress.profilesPending, true);
   const ready = step(game, 'dismiss-profiles');
   assert.equal(step(ready, 'phone').progress.dialogue.id, 'phone');
-  assert.deepEqual(profiles.map(([name]) => name), Object.keys(portrait));
+  assert.deepEqual(profiles.map(([name]) => name), ['洛克', '托尼', '小莉', '亚瑟', '蛋仔', '小柔', '威利', '凯特医生']);
+  assert.ok(profiles.every(([name]) => Object.hasOwn(portrait, name)));
 });

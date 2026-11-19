@@ -1,10 +1,11 @@
 import { arthurRelationships, characterProfileNames, clues, dialogues, portrait, profiles, purseHotspots, purseImages, scenes } from './content.mjs';
 import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs';
+import { canSolve } from './evidence_list.mjs';
 
 const byId = id => document.getElementById(id);
 const asset = name => new URL('../assets/' + encodeURIComponent(name), import.meta.url).href;
 // Browsers may still have the original opaque PNGs cached at the unversioned URLs.
-const portraitAsset = name => asset(name) + '?v=transparent';
+const portraitAsset = name => asset(name) + (name === 'kat_doctor.png' ? '?v=orange-hair' : '?v=transparent');
 const stage = byId('stage');
 const lens = byId('lens');
 const panel = byId('panel');
@@ -161,8 +162,9 @@ function render() {
   byId('back').disabled = !game.past.length;
   byId('forward').disabled = !dialogue && !game.future.length;
   const currentLine = dialogue ? dialogues[dialogue.id][dialogue.line] : null;
-  setImage(backstageMemory ? scenes.wake.backstageImage : hospitalMemory ? scenes.landing.image : dialogue?.id === 'hand' ? clues.hand.image : scene.image);
-  byId('scene').alt = backstageMemory ? '演出结束后的后台' : hospitalMemory ? '昨晚楼梯口的回忆' : dialogue?.id === 'hand' ? clues.hand.label : scene.label;
+  const artwork = currentLine?.[2];
+  setImage(artwork?.image ?? (backstageMemory ? scenes.wake.backstageImage : hospitalMemory ? scenes.landing.image : dialogue?.id === 'hand' ? clues.hand.image : scene.image));
+  byId('scene').alt = artwork?.alt ?? (backstageMemory ? '演出结束后的后台' : hospitalMemory ? '昨晚楼梯口的回忆' : dialogue?.id === 'hand' ? clues.hand.label : scene.label);
   const description = byId('scene-description');
   description.textContent = scene.description ?? '';
   description.hidden = !scene.description;
@@ -170,7 +172,7 @@ function render() {
   jammerLight.hidden = location !== 'fireplace' || jammerCloseup;
   jammerLight.classList.toggle('off', progress.jammer === 'off');
   const [speaker, line] = currentLine ?? [];
-  stage.classList.toggle('speaking', backstageMemory ? Boolean(speaker) : Boolean(dialogue));
+  stage.classList.toggle('speaking', backstageMemory || ['willy-crash', 'hand'].includes(dialogue?.id) ? Boolean(speaker) : Boolean(dialogue));
   stage.classList.toggle('memory', backstageMemory || dialogue?.id === 'opening-memory' || hospitalMemory);
   stage.classList.toggle('backstage-memory', backstageMemory);
   byId('dialogue').hidden = !dialogue;
@@ -193,7 +195,7 @@ function render() {
     for (const item of scene.hotspots) {
       const earlyDrink = location === 'yard' && item.id === 'drink' && (!progress.tonyAwake || inTonyChapter);
       const revisitArthur = inTonyChapter && location === 'arthur' &&
-        (item.id === 'body' || (item.id === 'hand' && progress.clues.includes('hand')) || item.id === 'arthur-phone');
+        (item.id === 'body' || item.id === 'hand' || item.id === 'arthur-phone');
       if (!inspecting && !earlyDrink && !revisitArthur) continue;
       if (item.id === 'arthur-phone' && !progress.examined) continue;
       if (beforeWakingTony && item.id === 'milk') continue;
@@ -216,6 +218,9 @@ function render() {
   actions.replaceChildren();
   if (inspecting) {
     if (progress.scene === 'hospital') {
+      if (!progress.clues.includes('willy-phone')) {
+        actions.append(button('查看警方调查结果', () => send('hospital')));
+      }
       if (!progress.hospitalFollowupDone) {
         actions.append(button('继续和小柔谈谈', () => send('hospital-followup')));
       } else if (!progress.clues.includes('miko-text')) {
@@ -261,7 +266,10 @@ function render() {
     }
     if (progress.scene === 'old-photo') actions.append(button('查看去年夏天的合照', () => send('record-old-photo')));
     if (['group-photo', 'old-photo'].includes(progress.scene) && progress.clues.includes('tie-clip')) {
-      actions.append(button('去医院', () => send('hospital')));
+      actions.append(button('查看警方调查结果，随后去医院', () => send('hospital')));
+    }
+    if (progress.scene === 'willy-crash' && progress.clues.includes('willy-phone')) {
+      actions.append(button('去医院看小柔', () => send('hospital')));
     }
   }
   if (exploring && (progress.visiting || inTonyChapter)) {
@@ -318,8 +326,41 @@ function openPanel(kind) {
   const title = byId('panel-title');
   const fromPurse = panel.open && body.querySelector('.purse-contents');
   body.replaceChildren();
-  panel.classList.toggle('cast-panel', kind === 'profiles');
-  if (kind === 'profiles') {
+  panel.classList.toggle('cast-panel', kind === 'profiles' || kind === 'solve');
+  panel.classList.toggle('solve-panel', kind === 'solve');
+  if (kind === 'solve') {
+    title.textContent = '解谜';
+    const instruction = document.createElement('p');
+    instruction.textContent = '请选择嫌疑人';
+    const warning = document.createElement('p');
+    warning.className = 'solve-warning';
+    warning.setAttribute('role', 'alert');
+    warning.hidden = true;
+    const grid = document.createElement('div');
+    grid.className = 'suspect-grid';
+    for (const [name] of profiles) {
+      const card = button(name, () => {
+        if (canSolve(game.progress, name)) {
+          panel.close();
+          send('solve', { suspect: name });
+          return;
+        }
+        grid.hidden = true;
+        instruction.hidden = true;
+        warning.textContent = '解密失败';
+        warning.hidden = false;
+      });
+      card.className = 'suspect-card';
+      const image = document.createElement('img');
+      image.src = portraitAsset(portrait[name]);
+      image.alt = '';
+      const label = document.createElement('span');
+      label.textContent = name;
+      card.replaceChildren(image, label);
+      grid.append(card);
+    }
+    body.append(instruction, warning, grid);
+  } else if (kind === 'profiles') {
     title.textContent = '人物档案';
     const grid = document.createElement('div');
     grid.className = 'cast-grid';
@@ -331,7 +372,7 @@ function openPanel(kind) {
       const heading = document.createElement('h3');
       heading.textContent = name;
       card.append(image, heading);
-      appendText(card, `${age} 岁 · ${role}`);
+      appendText(card, age == null ? role : `${age} 岁 · ${role}`);
       appendText(card, detail);
       grid.append(card);
     }
@@ -347,7 +388,7 @@ function openPanel(kind) {
     image.alt = `${name}的立绘`;
     const details = document.createElement('div');
     const [, role, description, age] = profiles.find(([member]) => member === name);
-    appendText(details, `${age} 岁 · ${role}`);
+    appendText(details, age == null ? role : `${age} 岁 · ${role}`);
     appendText(details, description);
     if (kind === 'arthur-profile') {
       const heading = document.createElement('h3');

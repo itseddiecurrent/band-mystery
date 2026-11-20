@@ -2,6 +2,9 @@ import { arthurRelationships, characterProfileNames, clues, dialogues, lineFor, 
 import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs';
 import { canSolve } from './evidence_list.mjs';
 import { createPortraitCache, portraitFilename } from './portrait-cache.mjs';
+import { installAnalytics } from './analytics.mjs';
+
+const analytics = installAnalytics();
 
 const byId = id => document.getElementById(id);
 // Refresh URLs after the custom-domain rollback so browsers do not reuse cached redirects.
@@ -252,6 +255,7 @@ function send(type, extra = {}) {
   notify(result.effect?.notice ?? '');
   game = result.game;
   if (game !== previous) {
+    analytics.update(game, { type, ...extra });
     save();
     render();
   }
@@ -533,6 +537,7 @@ function openPanel(kind) {
           return;
         }
         grid.hidden = true;
+        analytics.emit('choice', { choice: `solve-rejected:${name}` });
         instruction.hidden = true;
         warning.textContent = '解密失败';
         warning.hidden = false;
@@ -678,15 +683,18 @@ byId('new').onclick = () => {
   notify('');
   game = newGame();
   save();
+  analytics.begin(game, sessionId, true);
   render();
 };
 byId('continue').onclick = () => {
   if (!accessGranted || !saved) return;
   game = saved;
+  analytics.begin(game, sessionId);
   render();
 };
 byId('exit').onclick = () => {
   if (!confirm('退出会清除本次进度及记录。继续吗？')) return;
+  analytics.stop();
   notify('');
   updateSessionId(null);
   try {
@@ -741,5 +749,9 @@ stage.addEventListener('pointerdown', placeLens);
 stage.addEventListener('pointermove', placeLens);
 stage.addEventListener('pointerleave', () => { lens.hidden = true; });
 initializeSession();
+document.querySelectorAll('[data-game-version]').forEach(tag => { tag.textContent = analytics.config.version; });
+const analyticsToggle = byId('analytics-enabled');
+analyticsToggle.checked = analytics.enabled;
+analyticsToggle.onchange = () => analytics.setEnabled(analyticsToggle.checked);
 render();
 loadGameImages();

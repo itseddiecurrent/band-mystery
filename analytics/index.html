@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Playtest Observatory · Band Mystery</title>
+  <link rel="stylesheet" href="/dashboard.css">
+  <script type="module" src="/dashboard.mjs"></script>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div><p class="eyebrow">BAND MYSTERY / PRIVATE ANALYTICS</p><h1>Playtest observatory<span>.</span></h1><p class="subtitle">Follow the clues your players leave behind.</p></div>
+      <span class="private-badge">Owner workspace</span>
+    </header>
+    <form id="filters" class="toolbar">
+      <label>Playthroughs started<select id="days"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last year</option><option value="0">All time</option></select></label>
+      <label>Game version<select id="version"><option value="">All versions</option></select></label>
+      <button id="refresh" type="submit">Refresh data</button>
+      <p id="updated" aria-live="polite">Connecting to Supabase…</p>
+    </form>
+    <p id="error" class="error" role="alert" hidden></p>
+    <section id="empty" class="empty" hidden><h2>Your next playtest starts here.</h2><p>No playthroughs match these filters. Statistics appear after a player starts the updated game with sharing enabled. Earlier beta sessions cannot be recovered.</p></section>
+    <section class="metrics" aria-label="Playtest overview">
+      <article><p>Playthroughs started</p><strong id="starts">—</strong><small>New runs, excluding refreshes</small></article>
+      <article><p>Estimated players</p><strong id="players">—</strong><small>Anonymous browser identities</small></article>
+      <article class="featured"><p>Completion rate</p><strong id="completion">—</strong><small id="finished">Reached at least one ending</small></article>
+      <article><p>Median active playtime</p><strong id="duration">—</strong><small id="finished-duration">Hidden tabs and idle time excluded</small></article>
+    </section>
+    <div class="grid">
+      <section class="panel"><div class="panel-heading"><div><p class="eyebrow">PARTICIPATION</p><h2>Starts & completions</h2></div><span class="muted">By start date · UTC</span></div><div id="daily" class="chart" aria-label="Daily playthrough starts and completions"></div><p class="legend"><span class="swatch gold"></span>Started <span class="swatch blue"></span>Eventually finished</p></section>
+      <section class="panel"><div class="panel-heading"><div><p class="eyebrow">WHERE THEY PAUSE</p><h2>Last checkpoints</h2></div><strong id="inactive" class="minor-stat">—</strong></div><p class="explanation">Unfinished runs grouped by their last recorded checkpoint. “Inactive” means no activity for 7 days; it does not prove abandonment.</p><div id="stops" class="table-wrap"></div></section>
+      <section class="panel wide"><div class="panel-heading"><div><p class="eyebrow">STORY REACH</p><h2>Checkpoint coverage</h2></div><span class="muted">Unique runs · repeat visits count once</span></div><p class="explanation">Reach is the share of started runs that visited a checkpoint. Optional branches naturally have lower reach.</p><div id="checkpoints" class="table-wrap tall"></div></section>
+      <section class="panel"><div class="panel-heading"><div><p class="eyebrow">RESOLUTIONS</p><h2>Endings discovered</h2></div></div><div id="endings" class="table-wrap"></div></section>
+      <section class="panel"><div class="panel-heading"><div><p class="eyebrow">DECISIONS & INVESTIGATION</p><h2>Actions taken</h2></div></div><p class="explanation">Unique runs taking each action, including optional investigations and rejected accusations. These are not mutually exclusive.</p><div id="choices" class="table-wrap tall"></div></section>
+      <section class="panel wide"><div class="panel-heading"><div><p class="eyebrow">RELEASE RECORD</p><h2>Version history</h2></div><span class="muted">Private notes · may contain story spoilers</span></div><div id="versions" class="table-wrap"></div></section>
+    </div>
+    <footer>Only participating players are counted. Browser resets, offline delivery, and blockers affect coverage. Completion follows the selected start cohort, even if the ending is reached later.</footer>
+  </div>
+</body>
+</html>

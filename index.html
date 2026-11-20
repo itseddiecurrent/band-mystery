@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="google" content="notranslate">
   <title>樂隊酒局殺人事件</title>
-  <link rel="stylesheet" href="./src/style.css?v=asset-loader-1">
-  <script type="module" src="./src/main.mjs?v=asset-loader-2"></script>
+  <link rel="stylesheet" href="./src/style.css?v=analytics-1">
+  <script type="module" src="./src/main.mjs?v=analytics-1"></script>
 </head>
 <body>
   <main>
@@ -23,7 +23,7 @@
       </div>
     </section>
     <header id="game-header" hidden>
-      <p class="game-name">樂隊酒局殺人事件</p>
+      <p class="game-name">樂隊酒局殺人事件 <span class="version-tag" data-game-version>v0</span></p>
       <nav id="tools" aria-label="游戏工具" hidden>
         <button id="lens-toggle" aria-pressed="false">放大镜</button>
         <button data-panel="clues">线索</button>
@@ -37,6 +37,7 @@
       <img id="cover-art" class="cover-art" alt="">
       <div class="cover-menu">
         <h1 id="cover-title" lang="zh-Hant" translate="no">樂隊酒局<wbr>殺人事件</h1>
+        <p class="version-tag" data-game-version>v0</p>
         <form id="invite-form">
           <label for="invite-code">输入邀请码</label>
           <input id="invite-code" name="invite-code" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required aria-describedby="invite-error" disabled>
@@ -47,6 +48,8 @@
           <button id="new" lang="en">New Game</button>
           <button id="continue" lang="en" hidden>Continue</button>
         </div>
+        <label class="analytics-consent" title="仅分享进度、选择及活跃时长，帮助改善剧情。不收集姓名或联系方式，可取消。"><input id="analytics-enabled" type="checkbox" checked aria-describedby="analytics-info"> 分享匿名游玩统计</label>
+        <span id="analytics-info" class="visually-hidden">仅分享进度、选择及活跃时长，帮助改善剧情。不收集姓名或联系方式，可取消。</span>
       </div>
     </section>
     <section id="game" hidden aria-label="游戏画面">

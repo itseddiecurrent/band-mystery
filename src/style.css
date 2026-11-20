@@ -313,3 +313,9 @@ dialog li { padding: .25rem 0; }
 #invite-code[aria-invalid="true"] { border-color: #ff8383; }
 #invite-error { color: #ffaaaa; margin: 0; font-size: .85rem; }
 @media (max-width: 34rem) { #invite-form { gap: .4rem; font-size: .8rem; } }
+/* Optional playtest analytics notice on the title screen. */
+.analytics-consent { display: block; max-width: 32rem; margin-top: 1rem; font-size: .875rem; line-height: 1.6; color: #ddd; }
+.analytics-consent input { width: auto; margin-right: .35rem; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.version-tag { display: inline-block; font: .875rem/1.4 system-ui, sans-serif; color: #d1c2af; border: 1px solid #6a6060; border-radius: .25rem; padding: .1rem .4rem; margin: 0 0 .75rem; vertical-align: middle; letter-spacing: .03em; }
+.game-name .version-tag { margin: 0 0 0 .4rem; }

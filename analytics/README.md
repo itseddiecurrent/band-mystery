@@ -19,7 +19,7 @@ Open http://127.0.0.1:8787. This is a local dashboard, not a deployed website. I
 - **Last checkpoints:** unfinished runs, using their highest event sequence number so delayed delivery cannot move them backward. “Inactive” means no recorded activity in seven days, not proven abandonment.
 - **Filters:** start cohorts over 7/30/90/365 days or all time, and game version. All subsequent events for those runs count, including later completions. Daily chart dates use UTC. The version identifies the build that started a run.
 
-Player sharing is optional via the title-screen checkbox. Localhost gameplay is excluded by default; use `?analytics=on` for an intentional local test or `?analytics=off` to disable a deployed session. Unsent events are kept in session storage, retried with the same event IDs, and capped at 300. Closing the tab can lose unsent events, particularly offline; events older than seven days are discarded. Opting out clears pending events but cannot recall events already delivered.
+This private beta collects analytics for testers who have already agreed to participate; no version badge or analytics checkbox appears in the game. Localhost gameplay is excluded by default; use `?analytics=on` for an intentional local test or `?analytics=off` to disable a deployed session. Unsent events are kept in session storage, retried with the same event IDs, and capped at 300. Closing the tab can lose unsent events, particularly offline; events older than seven days are discarded. Opting out clears pending events but cannot recall events already delivered.
 
 ## Supabase setup and security
 
@@ -35,7 +35,7 @@ The existing GitHub Pages workflow copies `src/`, so the tracking code is includ
 
 ## Version history
 
-The current build tag is `v0`, visible on the title screen and game header. `bandmystery_versions` stores each version, its description, and creation time. The first entry is exactly `beta- single storyline with danzai being the murderer`. Descriptions appear only in the private dashboard; the public game shows just the tag.
+The current internal build tag is `v0`; it is not displayed in the game. `bandmystery_versions` stores each version, its description, and creation time. The first entry is exactly `beta- single storyline with danzai being the murderer`. Descriptions appear only in the private dashboard; the game displays neither the tag nor the description.
 
 For a later release, add its version and description in Supabase, then update `src/analytics-config.mjs` to match:
 

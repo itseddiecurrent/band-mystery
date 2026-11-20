@@ -439,9 +439,9 @@ function render() {
     if (progress.scene === 'yard' && canEnterCornfield(progress)) {
       actions.append(button('去小柔那里看看', () => send('cornfield')));
     }
-    if (progress.scene === 'band-bedroom') {
-      actions.append(button('查看门口地面', () => send('bedroom-shoe')));
-    }
+    // if (progress.scene === 'band-bedroom') {
+    //   actions.append(button('查看门口地面', () => send('bedroom-shoe')));
+    // }
     if (bedrooms.includes(progress.scene)) {
       actions.append(button('检查房间', () => send('search-bedroom')));
       actions.append(button('回走廊', () => send('return-bedroom-hall')));

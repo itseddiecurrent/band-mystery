@@ -69,6 +69,7 @@ export const scenes = {
   tony: {
     label: '托尼的隔间',
     image: 'tony-bedroom.png',
+    emptyImage: 'tony-bedroom-empty.png',
     hotspots: [
       { id: 'wake-tony', label: '叫醒托尼', rect: [16, 39, 23, 31] },
       { id: 'milk', label: '床头的牛奶杯', rect: [51, 55, 7, 12] },
@@ -131,7 +132,7 @@ export const scenes = {
   fireplace: {
     label: '客厅',
     image: 'living-room-fireplace.png',
-    hotspots: [{ id: 'jammer', label: '查看壁炉里的红灯', rect: [76, 48, 10, 13] }],
+    hotspots: [{ id: 'jammer', label: '检查此处', rect: [76, 48, 10, 13], concealed: true }],
     closeup: {
       label: '壁炉里的信号屏蔽器', image: 'fireplace-jammer-closeup.png',
       hotspots: [{ id: 'disable-jammer', label: '信号屏蔽器电源', rect: [59, 66, 5.5, 12] }],
@@ -194,6 +195,21 @@ export const nearbyScenes = {
   yard: ['tony', 'cornfield', 'fireplace'],
   cornfield: ['yard'],
   fireplace: ['yard'],
+};
+
+// Connections available while Locke searches the house for the missing device.
+// Separate from the earlier, story-gated investigation routes.
+export const jammerSearchRoutes = {
+  cornfield: ['yard'],
+  yard: ['cornfield', 'fireplace', 'tony', 'bedroom-hall'],
+  fireplace: ['yard', 'arthur'],
+  arthur: ['fireplace', 'landing', 'tony'],
+  landing: ['arthur', 'wake', 'bedroom-hall'],
+  wake: ['landing'],
+  tony: ['arthur', 'yard', 'bedroom-hall'],
+  'bedroom-hall': ['landing', 'tony', 'band-bedroom', 'miko-lili-bedroom', 'yard'],
+  'band-bedroom': ['bedroom-hall'],
+  'miko-lili-bedroom': ['bedroom-hall'],
 };
 
 export const dialogues = {
@@ -375,7 +391,7 @@ export const dialogues = {
     ['托尼', '洛克，去找那个箱子。找到就打电话，我在这儿等你。'],
     ['洛克', '小柔，是我。托尼在这儿陪你。我很快就回来。'],
   ],
-  jammer: [[null, '壁炉里有个指示灯在闪。洛克用手电一照，认出是托尼丢失的设备。']],
+  jammer: [[null, '洛克蹲下来，用手电照向壁炉深处。灰烬后藏着一个黑色箱子，正是托尼丢失的设备。']],
   'call-police': [
     [null, '洛克关掉屏蔽器，指示灯熄灭。手机重新显示信号。'],
     ['洛克', '喂，我要报警。这里有一个人死了，后院还有一个人昏迷。请派救护车。'],

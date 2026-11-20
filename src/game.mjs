@@ -1,4 +1,4 @@
-import { characterProfileNames, clues, dialogues, lineFor, nearbyScenes, purseHotspots, reviewGroups, scenes, storyTransitions } from './content.mjs';
+import { characterProfileNames, clues, dialogues, jammerSearchRoutes, lineFor, nearbyScenes, purseHotspots, reviewGroups, scenes, storyTransitions } from './content.mjs?v=jammer-search-1';
 import { canSolve } from './evidence_list.mjs';
 
 export const bedrooms = ['band-bedroom', 'miko-lili-bedroom'];
@@ -13,6 +13,7 @@ export function canSearchBedrooms(progress) {
 
 export function visitDestinations(progress) {
   const location = progress.visiting ?? progress.scene;
+  if (progress.searchingJammer) return jammerSearchRoutes[location] ?? [];
   if (location === 'yard' && (!progress.tonyAwake || progress.scene === 'tony')) return ['tony'];
   if (progress.scene === 'tony') {
     if (location === 'tony') return ['landing', 'arthur', 'yard'];
@@ -254,6 +255,49 @@ function applyAction(game, action) {
     return result({ notice: '已记录：小柔发给威利的短信' });
   }
   if (progress.dialogue || progress.finished) return unchanged();
+  if (action.type === 'search-jammer' || action.type === 'fireplace') {
+    if (progress.scene === 'cornfield' && !progress.searchingJammer) {
+      progress.searchingJammer = true;
+      delete progress.visiting;
+      arrive('yard');
+      return result();
+    }
+  }
+  if (progress.searchingJammer) {
+    if (action.type === 'visit' && visitDestinations(progress).includes(action.scene)) {
+      delete progress.visiting;
+      arrive(action.scene);
+      return result();
+    }
+    if (action.type === 'jammer' && progress.scene === 'fireplace' && !progress.jammer) {
+      startDialogue(next, 'jammer');
+      return result();
+    }
+    if (action.type === 'disable-jammer' && progress.scene === 'fireplace' && progress.jammer === 'found') {
+      progress.jammer = 'off';
+      record(next, '关闭屏蔽器，手机恢复信号');
+      startDialogue(next, 'call-police');
+      return result();
+    }
+    if (action.type === 'danzai-statement' && progress.policeCalled && progress.scene === 'yard') {
+      delete progress.searchingJammer;
+      arrive('danzai-statement', 'danzai-arrival');
+      return result();
+    }
+    if (action.type === 'bedroom-shoe' && progress.scene === 'band-bedroom') {
+      if (progress.clues.includes('bedroom-shoe')) return unchanged({ panel: 'bedroom-shoe' });
+      return recordClue('bedroom-shoe', { panel: 'bedroom-shoe' });
+    }
+    if (progress.scene === 'miko-lili-bedroom') {
+      if (action.type === 'miko-purse') return unchanged({ panel: 'miko-purse' });
+      if (purseHotspots.some(({ id }) => id === action.type)) {
+        if (progress.clues.includes(action.type)) return unchanged({ panel: action.type });
+        return recordClue(action.type, { panel: action.type });
+      }
+    }
+    // Earlier clue/dialogue triggers must not replay or move the story backwards.
+    return unchanged();
+  }
   if (action.type === 'recall-pillow') {
     if (!['tony', 'hospital', 'review'].includes(progress.scene) || !progress.clues.includes('milk')) return unchanged();
     progress.pillowReturnScene = progress.scene;
@@ -425,9 +469,7 @@ function applyAction(game, action) {
       collect(next, action.type);
       return result({ panel: action.type });
     case 'fireplace':
-      if (progress.scene !== 'cornfield') break;
-      arrive('fireplace');
-      return result();
+      break;
     case 'jammer':
       if (progress.scene !== 'fireplace' || progress.jammer) break;
       startDialogue(next, 'jammer');
@@ -491,6 +533,7 @@ function validProgress(progress) {
       (progress.pillowResumeMilk !== undefined && typeof progress.pillowResumeMilk !== 'boolean') ||
       !Array.isArray(progress.clues) || !progress.clues.every(id => Object.hasOwn(clues, id)) ||
       (progress.sawTireTracks !== undefined && typeof progress.sawTireTracks !== 'boolean') ||
+      (progress.searchingJammer !== undefined && typeof progress.searchingJammer !== 'boolean') ||
       (progress.searchedBedrooms !== undefined && (!Array.isArray(progress.searchedBedrooms) ||
         !progress.searchedBedrooms.every(scene => bedrooms.includes(scene)))) ||
       typeof progress.examined !== 'boolean' || typeof progress.finished !== 'boolean') return false;
@@ -541,9 +584,17 @@ export function parseSave(raw) {
     }
     const steps = [...timeline, ...game.history.map(row => row.checkpoint)];
     for (const progress of steps) {
+      // Old saves may already be in the living room or scouting its backyard.
+      if (progress?.scene === 'fireplace') {
+        progress.searchingJammer ??= true;
+        if (progress.visiting && Object.hasOwn(jammerSearchRoutes, progress.visiting)) {
+          progress.scene = progress.visiting;
+          delete progress.visiting;
+        }
+      }
       // Resume saves from the opening demo and from before Tony's profile was added.
       if (progress?.scene === 'arthur' && progress.finished) progress.finished = false;
-      if (progress?.scene === 'tony' && !progress.dialogue && !progress.tonyAwake && !progress.tonyProfileSeen) {
+      if (progress?.scene === 'tony' && !progress.searchingJammer && !progress.dialogue && !progress.tonyAwake && !progress.tonyProfileSeen) {
         progress.profilesPending = 'tony-profile';
       }
     }

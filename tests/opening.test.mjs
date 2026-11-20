@@ -234,7 +234,7 @@ test('the investigation reaches police arrival with each clue and the device shu
   const cornfieldClues = ['miko-knife', 'miko-wrist', 'miko-breathing', 'miko-missing-shoe'];
   for (const id of cornfieldClues) assert.equal(step(game, id), game);
   game = finishDialogue(step(game, 'cornfield'));
-  assert.equal(step(game, 'fireplace').progress.scene, 'fireplace');
+  assert.equal(step(game, 'search-jammer').progress.scene, 'yard');
   for (const id of cornfieldClues) {
     const inspection = dispatch(game, { type: id });
     assert.deepEqual(inspection.effect, { panel: id });
@@ -242,9 +242,11 @@ test('the investigation reaches police arrival with each clue and the device shu
     assert.equal(game.progress.clues.at(-1), id);
     assert.deepEqual(dispatch(game, { type: id }), { game, effect: { panel: id } });
   }
-  game = step(game, 'fireplace');
+  game = step(game, 'search-jammer');
+  assert.equal(game.progress.searchingJammer, true);
+  game = dispatch(game, { type: 'visit', scene: 'fireplace' }).game;
   assert.equal(step(game, 'disable-jammer'), game);
-  visitWithoutAdvancing(game, 'danzai-statement', 'yard');
+  assert.equal(step(game, 'danzai-statement'), game);
   game = finishDialogue(step(game, 'jammer'));
 
   game = parseSave(JSON.stringify(game));
@@ -260,7 +262,9 @@ test('the investigation reaches police arrival with each clue and the device shu
   assert.equal(step(game, 'disable-jammer'), game);
   assert.equal(game.history.filter(row => row.label === '关闭屏蔽器，手机恢复信号').length, 1);
 
+  game = dispatch(game, { type: 'visit', scene: 'yard' }).game;
   game = finishDialogue(step(game, 'danzai-statement'));
+  assert.equal(game.progress.searchingJammer, undefined);
   game = finishDialogue(step(game, 'danzai-testimony'));
   assert.equal(game.progress.scene, 'police');
   assert.deepEqual(game.progress.clues, [
@@ -322,7 +326,7 @@ test('refresh resumes the exact line and rewind keeps history without future clu
 test('investigation artwork resolves on disk', async () => {
   const clueImages = Object.values(clues).map(clue => clue.image).filter(Boolean);
   const dialogueImages = Object.values(dialogues).flat().map(([, , artwork]) => artwork?.image).filter(Boolean);
-  const filenames = [...Object.values(scenes).map(scene => scene.image), scenes.fireplace.closeup.image, scenes.wake.backstageImage, ...clueImages,
+  const filenames = [...Object.values(scenes).map(scene => scene.image), scenes.tony.emptyImage, scenes.fireplace.closeup.image, scenes.wake.backstageImage, ...clueImages,
     ...Object.values(portrait), ...Object.values(purseImages), ...dialogueImages];
   await Promise.all(filenames.map(name => access(new URL('../assets/' + name, import.meta.url))));
 });

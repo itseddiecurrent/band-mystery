@@ -1,5 +1,5 @@
-import { arthurRelationships, characterProfileNames, clues, dialogues, lineFor, nearbyScenes, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes, storyTransitions } from './content.mjs';
-import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs';
+import { arthurRelationships, characterProfileNames, clues, dialogues, lineFor, nearbyScenes, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes, storyTransitions } from './content.mjs?v=jammer-search-1';
+import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs?v=jammer-search-1';
 import { canSolve } from './evidence_list.mjs';
 import { createPortraitCache, portraitFilename } from './portrait-cache.mjs';
 import { installAnalytics } from './analytics.mjs';
@@ -9,7 +9,7 @@ const analytics = installAnalytics();
 const byId = id => document.getElementById(id);
 // Refresh URLs after the custom-domain rollback so browsers do not reuse cached redirects.
 const assetFilename = name => name === 'arthur-phone-lock-screen.png' ? name : name.replace(/\.png$/, '.jpg');
-const asset = name => new URL('../assets/' + assetFilename(name).split('/').map(encodeURIComponent).join('/'), import.meta.url).href + (name === 'title-screen.png' ? '?v=title-faces-2' : '?v=scene-images-1');
+const asset = name => new URL('../assets/' + assetFilename(name).split('/').map(encodeURIComponent).join('/'), import.meta.url).href + (name === 'title-screen.png' ? '?v=title-faces-2' : name === 'living-room-fireplace.png' ? '?v=jammer-search-1' : '?v=scene-images-1');
 const portraitAsset = name => asset(portraitFilename(name));
 const portraitCache = createPortraitCache(portraitAsset);
 const loader = byId('asset-loader');
@@ -229,9 +229,10 @@ function button(label, handler) {
   return element;
 }
 
-function hotspotButton({ id, label, rect }) {
+function hotspotButton({ id, label, rect, concealed }) {
   const target = button(label, () => send(id));
   target.className = 'hotspot';
+  if (concealed) target.classList.add('concealed-hotspot');
   target.dataset.hotspot = id;
   const [left, top, width, height] = rect.map(value => `${value}%`);
   Object.assign(target.style, { left, top, width, height });
@@ -325,6 +326,7 @@ function render() {
 
   const progress = game.progress;
   const location = progress.visiting ?? progress.scene;
+  const searchingJammer = progress.searchingJammer === true;
   const dialogue = progress.dialogue;
   const backstageMemory = dialogue?.id === 'opening-backstage';
   const hospitalMemory = dialogue?.id === 'miko-memory';
@@ -334,15 +336,13 @@ function render() {
   byId('forward').disabled = !dialogue && !game.future.length;
   const currentLine = dialogue ? lineFor(progress) : null;
   const artwork = currentLine?.[2];
-  setImage(artwork?.image ?? (backstageMemory ? scenes.wake.backstageImage : hospitalMemory ? scenes.landing.image : dialogue?.id === 'hand' ? clues.hand.image : scene.image));
+  const sceneImage = searchingJammer && location === 'tony' ? scenes.tony.emptyImage : scene.image;
+  setImage(artwork?.image ?? (backstageMemory ? scenes.wake.backstageImage : hospitalMemory ? scenes.landing.image : dialogue?.id === 'hand' ? clues.hand.image : sceneImage));
   preloadLikelyNextImages(progress, location);
   byId('scene').alt = artwork?.alt ?? (backstageMemory ? '演出结束后的后台' : hospitalMemory ? '昨晚楼梯口的回忆' : dialogue?.id === 'hand' ? clues.hand.label : scene.label);
   const description = byId('scene-description');
   description.textContent = scene.description ?? '';
   description.hidden = !scene.description;
-  const jammerLight = byId('jammer-light');
-  jammerLight.hidden = location !== 'fireplace' || jammerCloseup;
-  jammerLight.classList.toggle('off', progress.jammer === 'off');
   const [speaker, line] = currentLine ?? [];
   stage.classList.toggle('speaking', backstageMemory || ['willy-crash', 'hand'].includes(dialogue?.id) ? Boolean(speaker) : Boolean(dialogue));
   stage.classList.toggle('memory', location === 'tony-memory' || Boolean(artwork?.memory) || backstageMemory || dialogue?.id === 'opening-memory' || hospitalMemory || dialogue?.id === 'final-reconstruction');
@@ -358,7 +358,7 @@ function render() {
 
   const exploring = !dialogue && !progress.finished && !progress.profilesPending;
   const inspecting = exploring && !progress.visiting;
-  const inTonyChapter = progress.scene === 'tony';
+  const inTonyChapter = progress.scene === 'tony' && !searchingJammer;
   const beforeWakingTony = inTonyChapter && !progress.tonyAwake;
   byId('lens-toggle').disabled = !exploring || (!progress.visiting && !scene.hotspots.length);
   if (byId('lens-toggle').disabled) lens.hidden = true;
@@ -367,6 +367,7 @@ function render() {
   hotspots.replaceChildren();
   if (exploring) {
     for (const item of scene.hotspots) {
+      if (searchingJammer && !['jammer', 'disable-jammer', 'bedroom-shoe', 'miko-purse'].includes(item.id)) continue;
       const earlyDrink = location === 'yard' && item.id === 'drink' && (!progress.tonyAwake || inTonyChapter);
       const revisitArthur = inTonyChapter && location === 'arthur' &&
         (item.id === 'body' || item.id === 'hand' || item.id === 'arthur-phone');
@@ -390,7 +391,7 @@ function render() {
   }
   const actions = byId('actions');
   actions.replaceChildren();
-  if (inspecting) {
+  if (inspecting && !searchingJammer) {
     if (['tony', 'hospital', 'review'].includes(progress.scene) && progress.clues.includes('milk') && !progress.clues.includes('tony-pillow')) {
       actions.append(button('回看托尼的睡前回忆', () => send('recall-pillow')));
     }
@@ -445,7 +446,7 @@ function render() {
       actions.append(button('检查房间', () => send('search-bedroom')));
       actions.append(button('回走廊', () => send('return-bedroom-hall')));
     }
-    if (progress.scene === 'cornfield') actions.append(button('回屋找设备', () => send('fireplace')));
+    if (progress.scene === 'cornfield') actions.append(button('返回屋内', () => send('search-jammer')));
     if (progress.scene === 'fireplace') {
       if (progress.policeCalled) actions.append('手机已恢复信号。 ');
       actions.append(button('去后门', () => send('danzai-statement')));
@@ -463,7 +464,16 @@ function render() {
       actions.append(button('去医院看小柔', () => send('hospital')));
     }
   }
-  if (exploring && (progress.visiting || inTonyChapter)) {
+  if (exploring && searchingJammer) {
+    if (progress.policeCalled) {
+      actions.append('手机已恢复信号。 ');
+      if (location === 'yard') actions.append(button('去后门等待救援', () => send('danzai-statement')));
+    }
+    for (const destination of visitDestinations(progress)) {
+      actions.append(button(`去${scenes[destination].label}`, () => send('visit', { scene: destination })));
+    }
+  }
+  if (exploring && !searchingJammer && (progress.visiting || inTonyChapter)) {
     const labels = { landing: '回楼上', arthur: '回去检查亚瑟尸体' };
     for (const destination of visitDestinations(progress)) {
       if (inspecting && inTonyChapter && destination === 'yard') {

@@ -1,0 +1,9 @@
+Provider: built-in image_gen; precise-object-edit; transparent_background=false.
+
+Output: tony-bedroom-empty.png
+Reference: tony-bedroom.png (unchanged).
+Prompt: Edit this exact 1672x941 visual novel bedroom background. Remove ONLY the sleeping man Tony (his head, hair, glasses, red hoodie and body) from the bed, leaving the bedroom empty of people. Reconstruct the single pillow, bedsheet and loosely rumpled dark charcoal blanket naturally where he was lying; the bed should be visibly empty with no human-shaped bulge. Preserve the exact camera angle, wide landscape dimensions, bed location, single pillow at head of bed, bedside table, half-glass of milk, warm lamps, wall paintings, open doorway, blue night window, wooden panels, floor and all lighting. This is the same room visited later after Tony has left; do not redesign it, move furniture, add a spare pillow, add evidence, or add any people. Keep the existing detailed subdued anime game background style. No text or UI.
+
+Output: living-room-fireplace.png
+Reference: living-room-fireplace.png (previous revision in Git).
+Prompt: Edit this exact 1672x941 visual novel living room background. Remove the tiny RED indicator light visible on the black rectangular device inside the dark fireplace: turn that indicator completely off, dark and unlit. The device remains subtle and concealed in the shadowy fireplace, with no glow, no colored light, no reflective sparkle or visual cue calling attention to it. Preserve ALL other pixels and composition as closely as possible: same sofa, coffee table, glasses, party hat, mantle, paintings, open doorway, window, night lighting, ash, fireplace masonry and objects. Keep the same wide landscape framing and detailed anime background style. No new people, clues, text, UI, red markers or highlights.

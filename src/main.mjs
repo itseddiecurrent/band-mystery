@@ -9,7 +9,7 @@ const analytics = installAnalytics();
 const byId = id => document.getElementById(id);
 // Refresh URLs after the custom-domain rollback so browsers do not reuse cached redirects.
 const assetFilename = name => name === 'arthur-phone-lock-screen.png' ? name : name.replace(/\.png$/, '.jpg');
-const asset = name => new URL('../assets/' + assetFilename(name).split('/').map(encodeURIComponent).join('/'), import.meta.url).href + '?v=scene-images-1';
+const asset = name => new URL('../assets/' + assetFilename(name).split('/').map(encodeURIComponent).join('/'), import.meta.url).href + (name === 'title-screen.png' ? '?v=title-faces-2' : '?v=scene-images-1');
 const portraitAsset = name => asset(portraitFilename(name));
 const portraitCache = createPortraitCache(portraitAsset);
 const loader = byId('asset-loader');

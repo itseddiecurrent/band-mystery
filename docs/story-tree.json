@@ -1,0 +1,276 @@
+{
+  "version": 1,
+  "title": "乐队酒局杀人事件",
+  "nodes": [
+    {
+      "id": "wake",
+      "parentId": null,
+      "title": "洛克醒来",
+      "notes": "楼上房间。洛克头晕，想起昨晚刚演完，大家到托尼租的房子庆功。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "backstage",
+      "parentId": "wake",
+      "title": "回忆：演出散场",
+      "notes": "后台收拾器材。威利与亚瑟争吵，小莉提到两人常与蛋仔凑在一起。洛克劝和。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "party",
+      "parentId": "backstage",
+      "title": "回忆：庆功宴",
+      "notes": "小柔来找洛克，称赞演出并拿水给他。现有剧情在这里直接接洛克睡着；新选择可从此添加。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "blackout",
+      "parentId": "party",
+      "title": "洛克失去意识",
+      "notes": "小柔后来承认在洛克的水和托尼的牛奶里放了安眠药。当前版本没有玩家选择。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "flashlight",
+      "parentId": "blackout",
+      "title": "醒来，打开手机电筒",
+      "notes": "返回现在。点击发亮的手机，打开手电，走进楼上走廊。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "glass",
+      "parentId": "flashlight",
+      "title": "楼梯口的碎酒杯",
+      "notes": "发现碎玻璃和杯脚，登记线索。向楼梯下照去。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "arthur",
+      "parentId": "glass",
+      "title": "发现亚瑟",
+      "notes": "亚瑟倒在楼梯底，已无呼吸和脉搏。后脑重伤。左手握有银色物件，指甲缝有黑色残屑；手机为可选线索。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "tony",
+      "parentId": "arthur",
+      "title": "叫醒托尼",
+      "notes": "托尼说小柔送来牛奶，喝后异常困倦。两人的电话均无信号。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "pillow",
+      "parentId": "tony",
+      "title": "牛奶与失踪的枕头",
+      "notes": "杯口有白色粉末。查看托尼的睡前回忆，发现床边原有的备用枕头不见了。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "lily",
+      "parentId": "pillow",
+      "title": "后门发现小莉",
+      "notes": "小莉昏倒后醒来，说自己与蛋仔在后院听到争吵和响声。蛋仔先回屋；随后有人开门撞到她，她踩空。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "yard",
+      "parentId": "lily",
+      "title": "饮料与失踪的屏蔽器",
+      "notes": "窗台留下小莉的饮料。托尼发现车窗被砸、车内屏蔽器被拿走。此时并不知道是谁偷的。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "search",
+      "parentId": "yard",
+      "title": "搜查卧室和停车处",
+      "notes": "查看两间卧室、女式鞋、小柔包里的药盒、诊断处方、验伤记录和验孕棒，以及托尼车旁的轮胎印。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "cornfield",
+      "parentId": "search",
+      "title": "蛋仔带众人找到小柔",
+      "notes": "蛋仔已换便装。小柔在玉米地昏迷，有腕部伤口，少了一只鞋。托尼留下照看她。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "blocker",
+      "parentId": "cornfield",
+      "title": "关闭屏蔽器，报警救援",
+      "notes": "洛克搜屋，在客厅壁炉发现开启的屏蔽器，关闭后恢复信号，报警并请求救护车。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "danzai-account",
+      "parentId": "blocker",
+      "title": "蛋仔的说法",
+      "notes": "蛋仔说自己从楼上用手机照到亚瑟倒地，没有下楼；后来听见威利开车离开。此为证词，须核实。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "police",
+      "parentId": "danzai-account",
+      "title": "警方到场：死因与领带夹",
+      "notes": "警方确认亚瑟死于窒息，坠楼伤并不致命。从左手取出领带夹，比对演出合照，确认是威利佩戴的。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "crash",
+      "parentId": "police",
+      "title": "威利车祸，手机找回",
+      "notes": "现有主线：威利的后轮脱落，失控撞墙死亡。车辆和手机可回收，手机记录显示他长期虐待小柔。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "hospital",
+      "parentId": "crash",
+      "title": "医院听小柔讲述",
+      "notes": "小柔承认给洛克和托尼下药，讲述怀孕、约谈和坠楼。她称蛋仔答应支开小莉，后来宣称亚瑟已死并催威利离开。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "blocker-inference",
+      "parentId": "hospital",
+      "title": "关于屏蔽器的推测",
+      "notes": "小柔描述威利阻止报警、拿锤子去停车处，并听到玻璃声。洛克据此推测威利取走并开启屏蔽器；这不是独立核实的事实。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "reconstruct",
+      "parentId": "blocker-inference",
+      "title": "第一次还原",
+      "notes": "复盘争吵、碎杯、亚瑟失足和扯下领带夹。警方初步怀疑威利；洛克继续追查窒息死因与枕头。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "review",
+      "parentId": "reconstruct",
+      "title": "四组报告复查",
+      "notes": "可任意顺序：饮料与尸检、车辆、黑客勒索内幕、指甲黑羽与合照。三人黑客团伙内部分裂提供蛋仔的动机。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "accuse",
+      "parentId": "review",
+      "title": "指认蛋仔",
+      "notes": "完成复查和所需线索后指认蛋仔。现有版本错误指认可重试，不产生其他结局。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "confront",
+      "parentId": "accuse",
+      "title": "排练室对质",
+      "notes": "用非致命坠楼、窒息死因、羽毛服和蛋仔“没下楼”的说法之间的矛盾质问他。当前结论也将车辆破坏归于蛋仔。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "murder",
+      "parentId": "confront",
+      "title": "最终还原：枕头与黑羽",
+      "notes": "小柔和威利离开后，蛋仔用备用枕头杀害仍活着的亚瑟。亚瑟抓坏黑羽衣服；蛋仔把领带夹放回左手，漏掉指甲残屑。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "arrest",
+      "parentId": "murder",
+      "title": "蛋仔被捕",
+      "notes": "蛋仔此前销毁枕头和羽毛服并换装。对质时他袭击托尼，警方冲入制伏并带走他。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "sunset",
+      "parentId": "arrest",
+      "title": "与小柔看日落",
+      "notes": "洛克追问小柔是否在窗边看到停车处发生的事，以及为何没有劝威利别开车。小柔保持沉默。",
+      "condition": "",
+      "kind": "scene",
+      "status": "current",
+      "collapsed": false
+    },
+    {
+      "id": "kate",
+      "parentId": "sunset",
+      "title": "凯特与小柔私下谈话",
+      "notes": "凯特怀疑IP泄露与当晚安排可能与小柔有关，但明确没有证据。小柔没有承认，最终沉默。",
+      "condition": "",
+      "kind": "ending",
+      "status": "current",
+      "collapsed": false
+    }
+  ]
+}

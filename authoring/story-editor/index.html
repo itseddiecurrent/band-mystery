@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>剧情画布 · 乐队酒局杀人事件</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.mjs"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-icon" aria-hidden="true">⑂</span><div><h1>剧情画布</h1><p id="tree-title">乐队酒局杀人事件</p></div><span class="author-tag">创作工具</span></div>
+    <div class="file-actions"><span id="save-state" role="status" data-state="loading">正在读取…</span><button id="save" class="quiet">保存</button><button id="import">导入 JSON</button><button id="export">导出 JSON</button></div>
+  </header>
+  <main>
+    <section class="workspace" aria-label="剧情树编辑区">
+      <nav class="toolbar" aria-label="编辑工具">
+        <div class="tool-group"><button id="outline-toggle" title="显示或隐藏剧情大纲" aria-expanded="false">☷ 大纲</button><button id="undo" title="撤销 · Ctrl / ⌘ Z" disabled>撤销</button><button id="redo" title="重做 · Ctrl / ⌘ Shift Z" disabled>重做</button></div>
+        <div class="tool-group node-actions"><button id="add-child" title="在选中节点后添加子节点">＋ 子节点</button><button id="add-sibling" title="与选中节点并列">＋ 同级</button><button id="add-branch" class="primary" title="新增分支，保留原有后续剧情">⑂ 添加分支</button></div>
+      </nav>
+      <aside id="outline" class="outline" aria-label="剧情大纲" hidden><div class="outline-heading">剧情大纲 <span id="node-count"></span></div><input id="search" type="search" placeholder="搜索节点…" aria-label="搜索节点"><div id="outline-list"></div></aside>
+      <div id="canvas" tabindex="0" aria-label="剧情画布。拖动空白平移；双击节点编辑；缩放可使用底部按钮。">
+        <div id="world"><svg id="connections" aria-hidden="true"><defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs><g id="edges"></g></svg><div id="nodes"></div></div>
+        <div class="canvas-label"><span class="label-line"></span><span>剧情树</span><span class="label-detail">灰色只读 · 可添加分支</span></div>
+        <div class="empty-message" id="load-error" hidden><h2>暂时无法读取剧情</h2><p id="load-error-message"></p><button id="retry">重新读取</button></div>
+      </div>
+      <div class="status-legend" aria-label="节点状态"><span><i class="legend-current"></i>原有 · 只读</span><span><i class="legend-draft"></i>新增 · 未实现</span><span><i class="legend-implemented"></i>新增 · 已实现</span></div><div class="canvas-bottom"><span class="canvas-hint">拖动空白平移 <span>·</span> 双击节点编辑 <span>·</span> 右键更多操作</span><div class="zoom-tools"><button id="zoom-out" aria-label="缩小">−</button><span id="zoom-value">100%</span><button id="zoom-in" aria-label="放大">＋</button><span class="divider"></span><button id="locate" title="定位选中节点">定位</button><button id="fit" title="显示整棵剧情树">全览</button></div></div>
+    </section>
+    <aside id="inspector" class="inspector" aria-label="节点详情">
+      <div class="inspector-heading"><div><span class="eyebrow">节点详情</span><h2 id="inspector-title">编辑剧情</h2></div><button id="inspector-close" class="icon-button" aria-label="收起节点详情">×</button></div>
+      <p id="readonly-notice" class="readonly-notice" hidden>原有剧情只读，可从这里添加分支。</p><div class="selected-meta"><span id="node-position">起点</span><span id="child-count">0 个后续</span></div>
+      <form id="node-form" autocomplete="off">
+        <label for="node-title">节点标题</label><textarea id="node-title" rows="2" maxlength="500" required></textarea>
+        <div class="form-row"><div><label for="node-kind">类型</label><select id="node-kind"><option value="scene">剧情</option><option value="choice">选择</option><option value="ending">结局</option></select></div><div><label for="node-status">状态</label><select id="node-status"><option value="current" disabled>原有剧情 · 只读</option><option value="draft">未实现</option><option value="implemented">已实现</option></select></div></div>
+        <label for="node-condition">进入条件 <span>选填 · 显示在连线上</span></label><input id="node-condition" maxlength="200" placeholder="例如：洛克拿走饮料">
+        <label for="node-notes">剧情笔记</label><textarea id="node-notes" rows="8" maxlength="50000" placeholder="写下人物行动、证词或尚未决定的细节…"></textarea>
+        <div class="form-section"><h3>调整结构</h3><label for="node-parent">连接到</label><select id="node-parent"></select><div class="reorder"><button type="button" id="move-up">上移同级</button><button type="button" id="move-down">下移同级</button></div></div>
+        <button type="button" id="delete-node" class="danger">删除此节点及后续</button>
+      </form>
+      <p class="inspector-footnote">自动保存为独立的剧情文档。<br>标记“已实现”仅作记录，需另行接入游戏。</p>
+    </aside>
+    <button id="inspector-open" class="inspector-open" hidden>节点详情</button>
+  </main>
+  <div id="context-menu" class="context-menu" role="menu" hidden><button data-action="child" role="menuitem">添加子节点</button><button data-action="sibling" role="menuitem">添加同级节点</button><button data-action="branch" role="menuitem">在此添加分支</button><hr><button data-action="delete" role="menuitem" class="danger">删除节点及后续</button></div>
+  <dialog id="confirm-dialog"><h2 id="confirm-title"></h2><p id="confirm-message"></p><div class="dialog-actions"><button id="confirm-cancel">取消</button><button id="confirm-ok" class="primary">确认</button></div></dialog>
+  <input id="import-file" type="file" accept=".json,application/json" hidden>
+  <div id="toast" role="status" hidden></div>
+</body>
+</html>

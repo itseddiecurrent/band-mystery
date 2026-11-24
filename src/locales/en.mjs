@@ -155,7 +155,7 @@ export const english = {
   "警方检查手机时，发现了多段不同日期拍摄的照片和视频，记录着威利对小柔的殴打、折磨和威胁。警方向洛克和托尼说明了相关内容。": "On his phone, the police find photos and videos from different dates: Willy beating Miko, tormenting her, threatening her. They tell Locke and Tony what they've found.",
   "不是只有一次……他一直在伤害她。": "Not just once… He'd been doing this all along.",
   "我们还跟他一起排练、一起演出。她一个人撑了这么久。": "And we kept rehearsing with him. Kept getting up on stage with him. All that time, she was dealing with it on her own.",
-  "手机里接连出现的记录，拼出了小柔长期遭受威利虐待的经过。洛克想起她平时遮住手腕的袖口，决定到医院听她亲口说说。": "Piece by piece, the records reveal how long Willy had been abusing her. Locke thinks of Miko's sleeves, always covering her wrists. He wants to hear it from her at the hospital.",
+  "手机里接连出现的记录，拼出了小柔长期遭受威利虐待的经过。洛克想起她平时遮住手腕的袖口，决定到医院听她亲口说说。": "Piece by piece, the records reveal how long Willy had been abusing her. Locke thinks of Miko's sleeves, always covering her wrists. He'll go to the hospital and hear it from her.",
   "凯特医生把洛克和托尼带到病房门口。": "Dr. Kate brings Locke and Tony to the door of Miko's room.",
   "她已经脱离危险了，但现在还很虚弱。别聊太久，让她多休息。": "She's out of danger. Still very weak, though. Don't keep her talking too long. Let her rest.",
   "洛克和托尼走进病房，洛克把带来的东西放在床头。": "They go in. Locke sets what he's brought on the bedside table.",

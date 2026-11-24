@@ -1,4 +1,5 @@
-import { english } from './locales/en.mjs?v=vn-english-2';
+import { english, englishDialogueOverrides } from './locales/en.mjs?v=performance-script-1';
+import { dialogues, lineFor } from './content.mjs?v=jammer-search-1';
 
 export const LANGUAGE_KEY = 'band-mystery.language.v1';
 export const languages = ['zh', 'en'];
@@ -50,6 +51,37 @@ export function t(source, values = {}, locale = language) {
   }
   return result.replace(/\{([a-zA-Z]+)\}/g, (placeholder, key) =>
     Object.hasOwn(values, key) ? t(values[key], {}, locale) : placeholder);
+}
+
+// Presentation may turn an ellipsis into silent action. Never change canonical speakers in saves.
+export function localizedLine(progress, locale = language) {
+  const row = lineFor(progress);
+  if (locale !== 'en') return row;
+  const { id, line } = progress.dialogue;
+  const override = englishDialogueOverrides[id]?.[line];
+  return [override ? override.speaker : row[0], override?.text ?? t(row[1], {}, locale), ...row.slice(2)];
+}
+
+// Checkpoints identify the context of old Chinese history labels, including optional photo state.
+export function localizedHistory(history, locale = language) {
+  let cursor = null;
+  return history.map(row => {
+    if (row.checkpoint) cursor = structuredClone(row.checkpoint);
+    else if (cursor?.dialogue) {
+      const { id, line } = cursor.dialogue;
+      if (dialogues[id]?.[line]) {
+        const [speaker, message] = lineFor(cursor);
+        const canonicalLabel = speaker ? `${speaker}：「${message}」` : message;
+        if (row.label === canonicalLabel) {
+          const [displaySpeaker, displayText] = localizedLine(cursor, locale);
+          cursor.dialogue.line++;
+          if (locale !== 'en') return row.label;
+          return displaySpeaker ? `${t(displaySpeaker, {}, locale)}: “${displayText}”` : displayText;
+        }
+      }
+    }
+    return t(row.label, {}, locale);
+  });
 }
 
 export function applyPageLanguage(doc) {

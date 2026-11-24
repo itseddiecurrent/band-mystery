@@ -26,12 +26,13 @@ jobs:
         run: node --test
       - name: Prepare static site
         run: |
-          mkdir -p _site/assets/portraits
+          mkdir -p _site/assets/portraits _site/assets/fonts
           cp index.html _site/
           cp -R src _site/src
           cp assets/*.jpg _site/assets/
           cp assets/arthur-phone-lock-screen.png _site/assets/
           cp assets/portraits/*.webp _site/assets/portraits/
+          cp assets/fonts/*.woff2 assets/fonts/OFL.txt _site/assets/fonts/
           touch _site/.nojekyll
       - name: Upload site
         uses: actions/upload-pages-artifact@v4

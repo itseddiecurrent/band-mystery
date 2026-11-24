@@ -1,4 +1,4 @@
-import { english } from './locales/en.mjs';
+import { english } from './locales/en.mjs?v=script-voice-1';
 
 export const LANGUAGE_KEY = 'band-mystery.language.v1';
 export const languages = ['zh', 'en'];

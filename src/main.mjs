@@ -3,7 +3,7 @@ import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, pars
 import { canSolve } from './evidence_list.mjs';
 import { createPortraitCache, portraitFilename } from './portrait-cache.mjs';
 import { installAnalytics } from './analytics.mjs';
-import { t, readLanguage, setLanguage, applyPageLanguage } from './i18n.mjs';
+import { t, readLanguage, setLanguage, applyPageLanguage } from './i18n.mjs?v=script-voice-1';
 
 setLanguage(readLanguage());
 applyPageLanguage(document);

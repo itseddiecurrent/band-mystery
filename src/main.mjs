@@ -3,6 +3,10 @@ import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, pars
 import { canSolve } from './evidence_list.mjs';
 import { createPortraitCache, portraitFilename } from './portrait-cache.mjs';
 import { installAnalytics } from './analytics.mjs';
+import { t, readLanguage, setLanguage, applyPageLanguage } from './i18n.mjs';
+
+setLanguage(readLanguage());
+applyPageLanguage(document);
 
 const analytics = installAnalytics();
 
@@ -118,7 +122,7 @@ async function loadGameImages() {
   }
 
   const showFailure = () => {
-    failureMessage.textContent = `${failed.size} 张图片加载失败。网络恢复后可重试，也可以先进入游戏。`;
+    failureMessage.textContent = t('{count} 张图片加载失败。网络恢复后可重试，也可以先进入游戏。', { count: failed.size });
     actions.hidden = false;
   };
   showFailure();
@@ -169,7 +173,7 @@ function preloadLikelyNextImages(progress, location) {
 }
 
 function notify(message) {
-  byId('notice').textContent = message;
+  byId('notice').textContent = t(message);
 }
 
 function updateSessionId(id) {
@@ -224,7 +228,7 @@ function initializeSession() {
 function button(label, handler) {
   const element = document.createElement('button');
   element.type = 'button';
-  element.textContent = label;
+  element.textContent = t(label);
   element.addEventListener('click', handler);
   return element;
 }
@@ -339,9 +343,9 @@ function render() {
   const sceneImage = searchingJammer && location === 'tony' ? scenes.tony.emptyImage : scene.image;
   setImage(artwork?.image ?? (backstageMemory ? scenes.wake.backstageImage : hospitalMemory ? scenes.landing.image : dialogue?.id === 'hand' ? clues.hand.image : sceneImage));
   preloadLikelyNextImages(progress, location);
-  byId('scene').alt = artwork?.alt ?? (backstageMemory ? '演出结束后的后台' : hospitalMemory ? '昨晚楼梯口的回忆' : dialogue?.id === 'hand' ? clues.hand.label : scene.label);
+  byId('scene').alt = t(artwork?.alt ?? (backstageMemory ? '演出结束后的后台' : hospitalMemory ? '昨晚楼梯口的回忆' : dialogue?.id === 'hand' ? clues.hand.label : scene.label));
   const description = byId('scene-description');
-  description.textContent = scene.description ?? '';
+  description.textContent = t(scene.description ?? '');
   description.hidden = !scene.description;
   const [speaker, line] = currentLine ?? [];
   stage.classList.toggle('speaking', backstageMemory || ['willy-crash', 'hand'].includes(dialogue?.id) ? Boolean(speaker) : Boolean(dialogue));
@@ -352,8 +356,8 @@ function render() {
   stage.classList.toggle('finished', progress.finished);
   byId('ending').hidden = !progress.finished;
   if (dialogue) {
-    byId('speaker').textContent = speaker ?? '';
-    byId('line').textContent = line;
+    byId('speaker').textContent = t(speaker);
+    byId('line').textContent = t(line);
   }
 
   const exploring = !dialogue && !progress.finished && !progress.profilesPending;
@@ -411,7 +415,7 @@ function render() {
     if (progress.scene === 'review') {
       for (const [group, { label }] of Object.entries(reviewGroups)) {
         const completed = progress.reviewedGroups?.includes(group);
-        const control = button(completed ? `${label}（已完成）` : label, () => send('review-group', { group }));
+        const control = button(completed ? t('{label}（已完成）', { label }) : label, () => send('review-group', { group }));
         control.disabled = completed;
         actions.append(control);
       }
@@ -432,7 +436,7 @@ function render() {
     if (progress.scene === 'bedroom-hall') {
       for (const room of bedrooms) {
         const checked = progress.searchedBedrooms?.includes(room) ? '（已检查）' : '';
-        actions.append(button(`去${scenes[room].label}${checked}`, () => send('enter-bedroom', { scene: room })));
+        actions.append(button(t('去{place}{checked}', { place: scenes[room].label, checked }), () => send('enter-bedroom', { scene: room })));
       }
       actions.append(button('回后院', () => send('return-yard')));
     }
@@ -448,7 +452,7 @@ function render() {
     }
     if (progress.scene === 'cornfield') actions.append(button('返回屋内', () => send('search-jammer')));
     if (progress.scene === 'fireplace') {
-      if (progress.policeCalled) actions.append('手机已恢复信号。 ');
+      if (progress.policeCalled) actions.append(t('手机已恢复信号。 '));
       actions.append(button('去后门', () => send('danzai-statement')));
     }
     if (progress.scene === 'police') actions.append(button('询问警方亚瑟状况', () => send('inspect-clip')));
@@ -466,11 +470,11 @@ function render() {
   }
   if (exploring && searchingJammer) {
     if (progress.policeCalled) {
-      actions.append('手机已恢复信号。 ');
+      actions.append(t('手机已恢复信号。 '));
       if (location === 'yard') actions.append(button('去后门等待救援', () => send('danzai-statement')));
     }
     for (const destination of visitDestinations(progress)) {
-      actions.append(button(`去${scenes[destination].label}`, () => send('visit', { scene: destination })));
+      actions.append(button(t('去{place}', { place: scenes[destination].label }), () => send('visit', { scene: destination })));
     }
   }
   if (exploring && !searchingJammer && (progress.visiting || inTonyChapter)) {
@@ -482,7 +486,7 @@ function render() {
         continue;
       }
       const label = inTonyChapter ? labels[destination] : undefined;
-      actions.append(button(label ?? `去${scenes[destination].label}`, () => send('visit', { scene: destination })));
+      actions.append(button(label ?? t('去{place}', { place: scenes[destination].label }), () => send('visit', { scene: destination })));
     }
     if (inspecting && beforeWakingTony) actions.append(button('叫醒托尼', () => send('wake-tony')));
   }
@@ -493,7 +497,7 @@ function render() {
 
 function appendText(container, message) {
   const paragraph = document.createElement('p');
-  paragraph.textContent = message;
+  paragraph.textContent = t(message);
   container.append(paragraph);
 }
 
@@ -502,7 +506,7 @@ function showClue(container, id) {
   if (clue.image) {
     const img = document.createElement('img');
     img.src = asset(clue.image);
-    img.alt = clue.label;
+    img.alt = t(clue.label);
     if (id === 'arthur-phone') img.className = 'phone-clue';
     if (clue.crop) {
       const { x, y, width, height, sourceWidth } = clue.crop;
@@ -530,9 +534,9 @@ function openPanel(kind) {
   panel.classList.toggle('cast-panel', kind === 'profiles' || kind === 'solve');
   panel.classList.toggle('solve-panel', kind === 'solve');
   if (kind === 'solve') {
-    title.textContent = '解谜';
+    title.textContent = t('解谜');
     const instruction = document.createElement('p');
-    instruction.textContent = '请选择嫌疑人';
+    instruction.textContent = t('请选择嫌疑人');
     const warning = document.createElement('p');
     warning.className = 'solve-warning';
     warning.setAttribute('role', 'alert');
@@ -549,7 +553,7 @@ function openPanel(kind) {
         grid.hidden = true;
         analytics.emit('choice', { choice: `solve-rejected:${name}` });
         instruction.hidden = true;
-        warning.textContent = '解密失败';
+        warning.textContent = t('解密失败');
         warning.hidden = false;
       });
       card.className = 'suspect-card';
@@ -557,14 +561,14 @@ function openPanel(kind) {
       image.src = portraitAsset(portrait[name]);
       image.alt = '';
       const label = document.createElement('span');
-      label.textContent = name;
+      label.textContent = t(name);
       card.replaceChildren(image, label);
       grid.append(card);
     }
     const retry = button('重新选择', () => { grid.hidden = false; instruction.hidden = false; warning.hidden = true; });
     body.append(instruction, warning, grid, retry);
   } else if (kind === 'profiles') {
-    title.textContent = '人物档案';
+    title.textContent = t('人物档案');
     const grid = document.createElement('div');
     grid.className = 'cast-grid';
     for (const [name, role, detail, age] of profiles) {
@@ -573,9 +577,9 @@ function openPanel(kind) {
       image.src = portraitAsset(portrait[name]);
       image.alt = '';
       const heading = document.createElement('h3');
-      heading.textContent = name;
+      heading.textContent = t(name);
       card.append(image, heading);
-      appendText(card, age == null ? role : `${age} 岁 · ${role}`);
+      appendText(card, age == null ? role : t('{age} 岁 · {role}', { age, role }));
       appendText(card, detail);
       grid.append(card);
     }
@@ -583,23 +587,23 @@ function openPanel(kind) {
     if (game.progress.profilesPending) body.append(button('继续调查', () => panel.close()));
   } else if (Object.hasOwn(characterProfileNames, kind)) {
     const name = characterProfileNames[kind];
-    title.textContent = `人物档案 · ${name}`;
+    title.textContent = t('人物档案 · {name}', { name });
     const profile = document.createElement('div');
     profile.className = 'character-profile';
     const image = document.createElement('img');
     image.src = portraitAsset(portrait[name]);
-    image.alt = `${name}的立绘`;
+    image.alt = t('{name}的立绘', { name });
     const details = document.createElement('div');
     const [, role, description, age] = profiles.find(([member]) => member === name);
-    appendText(details, age == null ? role : `${age} 岁 · ${role}`);
+    appendText(details, age == null ? role : t('{age} 岁 · {role}', { age, role }));
     appendText(details, description);
     if (kind === 'arthur-profile') {
       const heading = document.createElement('h3');
-      heading.textContent = '与乐队成员的关系';
+      heading.textContent = t('与乐队成员的关系');
       const list = document.createElement('ul');
       for (const relationship of arthurRelationships) {
         const item = document.createElement('li');
-        item.textContent = relationship;
+        item.textContent = t(relationship);
         list.append(item);
       }
       details.append(heading, list);
@@ -607,17 +611,17 @@ function openPanel(kind) {
     profile.append(image, details);
     body.append(profile, button('继续调查', () => panel.close()));
   } else if (kind === 'phone') {
-    title.textContent = '手机';
+    title.textContent = t('手机');
     body.append(button('打开手电筒', () => {
       panel.close();
       send('flashlight');
     }));
   } else if (kind === 'miko-purse' || kind === 'miko-purse-open') {
-    title.textContent = '小柔的挎包';
+    title.textContent = t('小柔的挎包');
     const opened = kind === 'miko-purse-open';
     const image = document.createElement('img');
     image.src = asset(opened ? purseImages.open : purseImages.closed);
-    image.alt = opened ? '打开的挎包，里面有药盒、诊断书和处方、泛黄的检查记录和一个未拆封的盒子' : '木椅上合着的酒红色挎包';
+    image.alt = t(opened ? '打开的挎包，里面有药盒、诊断书和处方、泛黄的检查记录和一个未拆封的盒子' : '木椅上合着的酒红色挎包');
     if (opened) {
       const contents = document.createElement('div');
       contents.className = 'purse-contents';
@@ -627,7 +631,7 @@ function openPanel(kind) {
     } else {
       const choices = document.createElement('nav');
       choices.className = 'purse-actions';
-      choices.setAttribute('aria-label', '挎包操作');
+      choices.setAttribute('aria-label', t('挎包操作'));
       choices.append(
         button('打开挎包', () => openPanel('miko-purse-open')),
         button('保持原样', () => panel.close()),
@@ -635,17 +639,17 @@ function openPanel(kind) {
       body.append(image, choices);
     }
   } else if (kind === 'clues') {
-    title.textContent = '线索册';
+    title.textContent = t('线索册');
     if (!game.progress.clues.length) appendText(body, '尚未发现线索。');
     for (const id of game.progress.clues) {
       body.append(button(clues[id].label, () => openPanel(id)));
     }
   } else if (kind === 'history') {
-    title.textContent = '游玩记录';
+    title.textContent = t('游玩记录');
     const list = document.createElement('ol');
     game.history.forEach((row, index) => {
       const item = document.createElement('li');
-      item.textContent = row.label;
+      item.textContent = t(row.label);
       if (row.checkpoint) item.append(' ', button('从此处继续', () => {
         panel.close();
         send('rewind', { index });
@@ -654,7 +658,7 @@ function openPanel(kind) {
     });
     body.append(list);
   } else {
-    title.textContent = clues[kind].label;
+    title.textContent = t(clues[kind].label);
     showClue(body, kind);
     if (fromPurse) {
       const back = button('返回挎包', () => openPanel('miko-purse-open'));
@@ -668,6 +672,13 @@ function openPanel(kind) {
 panel.addEventListener('close', () => {
   if (game?.progress.profilesPending && !panel.open) send('dismiss-profiles');
 });
+
+byId('language').onchange = event => {
+  setLanguage(event.target.value);
+  applyPageLanguage(document);
+  notify('');
+  render();
+};
 
 byId('invite-form').onsubmit = event => {
   event.preventDefault();
@@ -689,7 +700,7 @@ byId('invite-form').onsubmit = event => {
 };
 byId('new').onclick = () => {
   if (!accessGranted) return;
-  if (saved && !confirm('开始新游戏会覆盖本次进度和记录。继续吗？')) return;
+  if (saved && !confirm(t('开始新游戏会覆盖本次进度和记录。继续吗？'))) return;
   notify('');
   game = newGame();
   save();
@@ -703,7 +714,7 @@ byId('continue').onclick = () => {
   render();
 };
 byId('exit').onclick = () => {
-  if (!confirm('退出会清除本次进度及记录。继续吗？')) return;
+  if (!confirm(t('退出会清除本次进度及记录。继续吗？'))) return;
   analytics.stop();
   notify('');
   updateSessionId(null);
@@ -723,7 +734,7 @@ byId('back').onclick = () => send('back');
 byId('forward').onclick = () => send('forward');
 byId('dialogue').onclick = () => send('forward');
 document.addEventListener('keydown', event => {
-  const isControl = event.target instanceof Element && event.target.closest('button, input, a');
+  const isControl = event.target instanceof Element && event.target.closest('button, input, select, textarea, a');
   if (event.key !== 'Enter' || panel.open || !game?.progress.dialogue) return;
   if (isControl && event.target !== byId('dialogue')) return;
   event.preventDefault();

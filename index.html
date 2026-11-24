@@ -4,74 +4,81 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="google" content="notranslate">
-  <title>樂隊酒局殺人事件</title>
-  <link rel="stylesheet" href="./src/style.css?v=jammer-search-1">
-  <script type="module" src="./src/main.mjs?v=jammer-search-1"></script>
+  <title data-i18n="樂隊酒局殺人事件">樂隊酒局殺人事件</title>
+  <link rel="stylesheet" href="./src/style.css?v=i18n-1">
+  <script type="module" src="./src/main.mjs?v=i18n-1"></script>
 </head>
 <body>
   <main>
-    <section id="asset-loader" aria-label="正在加载游戏图片">
+    <section id="asset-loader" aria-label="正在加载游戏图片" data-i18n-aria-label="正在加载游戏图片">
       <div class="asset-loader-card">
-        <h1>正在下载游戏资源</h1>
-        <progress id="asset-progress" max="1" value="0" aria-label="图片加载进度"></progress>
+        <h1 data-i18n="正在下载游戏资源">正在下载游戏资源</h1>
+        <progress id="asset-progress" max="1" value="0" aria-label="图片加载进度" data-i18n-aria-label="图片加载进度"></progress>
         <p id="asset-load-count">0 / 0</p>
         <div id="asset-load-actions" hidden>
           <p id="asset-load-error" role="alert"></p>
-          <button id="asset-retry" type="button">重试未加载的图片</button>
-          <button id="asset-continue" type="button">继续进入游戏</button>
+          <button id="asset-retry" type="button" data-i18n="重试未加载的图片">重试未加载的图片</button>
+          <button id="asset-continue" type="button" data-i18n="继续进入游戏">继续进入游戏</button>
         </div>
       </div>
     </section>
     <header id="game-header" hidden>
-      <p class="game-name">樂隊酒局殺人事件</p>
-      <nav id="tools" aria-label="游戏工具" hidden>
-        <button id="lens-toggle" aria-pressed="false">放大镜</button>
-        <button data-panel="clues">线索</button>
-        <button data-panel="profiles">人物档案</button>
-        <button data-panel="solve">解谜</button>
-        <button data-panel="history">记录</button>
-        <button id="exit">退出</button>
+      <p class="game-name" data-i18n="樂隊酒局殺人事件">樂隊酒局殺人事件</p>
+      <nav id="tools" aria-label="游戏工具" data-i18n-aria-label="游戏工具" hidden>
+        <button id="lens-toggle" aria-pressed="false" data-i18n="放大镜">放大镜</button>
+        <button data-panel="clues" data-i18n="线索">线索</button>
+        <button data-panel="profiles" data-i18n="人物档案">人物档案</button>
+        <button data-panel="solve" data-i18n="解谜">解谜</button>
+        <button data-panel="history" data-i18n="记录">记录</button>
+        <button id="exit" data-i18n="退出">退出</button>
       </nav>
     </header>
     <section id="title" aria-labelledby="cover-title" inert>
       <img id="cover-art" class="cover-art" alt="">
       <div class="cover-menu">
-        <h1 id="cover-title" lang="zh-Hant" translate="no">樂隊酒局<wbr>殺人事件</h1>
+        <h1 id="cover-title" translate="no" data-i18n="樂隊酒局殺人事件">樂隊酒局<wbr>殺人事件</h1>
+        <div class="language-control">
+          <label for="language" data-i18n="语言">语言</label>
+          <select id="language" name="language" aria-label="语言" data-i18n-aria-label="语言">
+            <option value="zh" lang="zh-Hans">简体中文</option>
+            <option value="en" lang="en">English</option>
+          </select>
+        </div>
         <form id="invite-form">
-          <label for="invite-code">输入邀请码</label>
+          <label for="invite-code" data-i18n="输入邀请码">输入邀请码</label>
           <input id="invite-code" name="invite-code" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" required aria-describedby="invite-error" disabled>
-          <button id="invite-submit" type="submit" disabled>进入游戏</button>
-          <p id="invite-error" role="alert" hidden>邀请码不正确，请重试。</p>
+          <button id="invite-submit" type="submit" disabled data-i18n="进入游戏">进入游戏</button>
+          <p id="invite-error" role="alert" hidden data-i18n="邀请码不正确，请重试。">邀请码不正确，请重试。</p>
         </form>
         <div id="cover-actions" class="cover-actions" hidden>
-          <button id="new" lang="en">New Game</button>
-          <button id="continue" lang="en" hidden>Continue</button>
+          <button id="new" data-i18n="开始游戏">开始游戏</button>
+          <button id="continue" data-i18n="继续游戏" hidden>继续游戏</button>
         </div>
       </div>
     </section>
-    <section id="game" hidden aria-label="游戏画面">
+    <section id="game" hidden aria-label="游戏画面" data-i18n-aria-label="游戏画面">
       <div class="scene-frame">
         <div id="stage">
           <img id="scene" alt="">
           <div id="lens" hidden></div>
           <div id="hotspots"></div>
           <img id="portrait" alt="" hidden>
-          <div id="ending" role="status" hidden>剧情结束</div>
+          <div id="ending" role="status" hidden data-i18n="剧情结束">剧情结束</div>
         </div>
       </div>
       <p id="scene-description" hidden></p>
       <button id="dialogue" hidden>
         <span><strong id="speaker"></strong><span id="line"></span></span>
       </button>
-      <nav class="plot-controls" aria-label="剧情导航">
-        <button id="back" disabled>← 后退</button>
-        <button id="forward" disabled>前进 →</button>
+      <nav class="plot-controls" aria-label="剧情导航" data-i18n-aria-label="剧情导航">
+        <button id="back" disabled data-i18n="← 后退">← 后退</button>
+        <button id="forward" disabled data-i18n="前进 →">前进 →</button>
       </nav>
       <div id="actions"></div>
     </section>
     <p id="notice" role="status"></p>
     <dialog id="panel" aria-labelledby="panel-title">
-      <form method="dialog"><button aria-label="关闭">关闭</button></form>
+      <form method="dialog"><button aria-label="关闭" data-i18n-aria-label="关闭" data-i18n="关闭">关闭</button></form>
       <h2 id="panel-title"></h2>
       <div id="panel-body"></div>
     </dialog>

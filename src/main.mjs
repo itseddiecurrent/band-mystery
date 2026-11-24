@@ -1,9 +1,9 @@
-import { arthurRelationships, characterProfileNames, clues, dialogues, lineFor, nearbyScenes, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes, storyTransitions } from './content.mjs?v=jammer-search-1';
+import { arthurRelationships, characterProfileNames, clues, dialogues, nearbyScenes, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes, storyTransitions } from './content.mjs?v=jammer-search-1';
 import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs?v=jammer-search-1';
 import { canSolve } from './evidence_list.mjs';
 import { createPortraitCache, portraitFilename } from './portrait-cache.mjs';
 import { installAnalytics } from './analytics.mjs';
-import { t, readLanguage, setLanguage, applyPageLanguage } from './i18n.mjs?v=vn-english-2';
+import { t, readLanguage, setLanguage, applyPageLanguage, localizedLine, localizedHistory } from './i18n.mjs?v=performance-script-1';
 
 setLanguage(readLanguage());
 applyPageLanguage(document);
@@ -338,7 +338,7 @@ function render() {
   const scene = jammerCloseup ? scenes.fireplace.closeup : scenes[location];
   byId('back').disabled = !game.past.length;
   byId('forward').disabled = !dialogue && !game.future.length;
-  const currentLine = dialogue ? lineFor(progress) : null;
+  const currentLine = dialogue ? localizedLine(progress) : null;
   const artwork = currentLine?.[2];
   const sceneImage = searchingJammer && location === 'tony' ? scenes.tony.emptyImage : scene.image;
   setImage(artwork?.image ?? (backstageMemory ? scenes.wake.backstageImage : hospitalMemory ? scenes.landing.image : dialogue?.id === 'hand' ? clues.hand.image : sceneImage));
@@ -647,9 +647,10 @@ function openPanel(kind) {
   } else if (kind === 'history') {
     title.textContent = t('游玩记录');
     const list = document.createElement('ol');
+    const labels = localizedHistory(game.history);
     game.history.forEach((row, index) => {
       const item = document.createElement('li');
-      item.textContent = t(row.label);
+      item.textContent = labels[index];
       if (row.checkpoint) item.append(' ', button('从此处继续', () => {
         panel.close();
         send('rewind', { index });

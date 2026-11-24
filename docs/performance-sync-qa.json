@@ -1,0 +1,71 @@
+{
+  "baseline": "68d089b5c33152ba4f995ab4f3a51d789577fe6a",
+  "scope": "Sync user-approved English performance document into game presentation",
+  "document": "docs/english-script.txt",
+  "sync_command": "node scripts/sync-english-script.mjs",
+  "check_command": "node scripts/sync-english-script.mjs --check",
+  "document_bindings": 311,
+  "dialogue_cards": 222,
+  "dialogue_scenes": 46,
+  "catalog_keys": 472,
+  "context_overrides": [
+    "pillow-observation:0",
+    "hand:0",
+    "kat-miko-private:8",
+    "kat-miko-private:23"
+  ],
+  "automated": {
+    "workspace_tests_passed": 57,
+    "isolated_pr_tests_passed": 52,
+    "unrelated_local_presence_tests_excluded_from_pr": 5,
+    "checks": [
+      "Approved document matches all English dialogue cards and reference bindings",
+      "Chinese display rows, artwork metadata and canonical save labels remain unchanged",
+      "Silent English actions have no dialogue speaker, including checkpointed legacy history",
+      "Shared hand and pillow text retains separate story and notebook versions",
+      "Both optional-photo speeches and restored history agree",
+      "Missing scenes, speaker reorder and missing alternate text are rejected",
+      "Multiline testimony and artwork captions are not truncated",
+      "Existing bilingual coverage, placeholders, names, story progression, rewind and accusation tests pass"
+    ]
+  },
+  "browser": {
+    "method": "Production-style static bundle with disposable local save fixtures selected through a separate QA page; analytics disabled",
+    "checked": [
+      "Approved backstage and Kate accusation lines",
+      "Both Miko silent actions, ending and back/forward",
+      "Silent action in checkpointed Chinese history rendered as English action",
+      "Refresh and language switch at the same saved silent checkpoint: zh to en",
+      "Photo and no-photo sunset variants",
+      "Hand/pillow story text, separate hand notebook prose",
+      "Full Miko notebook testimony through its final sentence",
+      "All eight cast profiles"
+    ],
+    "desktop": [
+      1280,
+      720
+    ],
+    "narrow": {
+      "viewport": [
+        390,
+        844
+      ],
+      "body_width": 390,
+      "line_scroll_width": 348,
+      "line_client_width": 348,
+      "forward_bottom": 785.9609375,
+      "font": "BIZ UDGothic"
+    },
+    "console_errors": 0,
+    "screenshot": "docs/performance-script-preview.jpg"
+  },
+  "limitations": [
+    "No full route browser playthrough repeated for this integration; progression is covered by existing tests",
+    "No exhaustive device or short landscape matrix",
+    "Original lettering embedded in artwork remains Chinese with accompanying translated prose",
+    "Very old history without checkpoints uses the generic readable fallback",
+    "No production deployment performed; merge uses the existing Pages workflow"
+  ],
+  "document_sha256": "161a96f3effb59cd0c1bfae23a821903d16dd45bbb09172440b08d6284143ba5",
+  "catalog_sha256": "fd04d874041a5702f9a3e8bddb6a06bf23105e131a3c487c7ca6eca0225c486d"
+}

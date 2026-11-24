@@ -4,7 +4,7 @@
 
 Translate the implemented Chinese in [src/content.mjs](../src/content.mjs) into English. Read complete connected scenes, including [lineFor()](../src/content.mjs) with and without the optional old photo. [场景.txt](../场景.txt) supplies context, but contains unimplemented material and older wording; the playable Chinese governs this translation. The authoring canvas does not define playable routes.
 
-The current English was translated afresh from Chinese using `translate-visual-novel`, replacing the earlier literary revision. The old English catalog was excluded from translation inputs. The scope covers 275 unique story, clue, profile, observation and accessibility strings; 197 functional UI labels and approved names were retained. Each Chinese lookup key, speaker, row, artwork association and save identifier remains unchanged. Shared source strings have one English value across their locations.
+The current English follows the user-approved performance script in [english-script.txt](english-script.txt), revised with `sw-dialogue` after the Chinese-source translation. It uses casual exchanges and short action paragraphs. Canonical Chinese text, speakers, row positions, artwork associations and save identifiers stay unchanged. English presentation turns two of Miko's ellipses into silent action and preserves the separate story/notebook wording for the shared hand and pillow sources.
 
 ## English that works in a dialogue box
 
@@ -12,7 +12,7 @@ Write what this person would say to the other person at this moment. Translate t
 
 For example, Adam's backstage line now reads:
 
-> Come on, we just get together to practice. We're all on the same team up there, so we leave the personal stuff out of it. Miko and Willy broke up ages ago, and they still play together.
+> What plotting? We just get together to practice. We leave the personal stuff offstage. Miko and Willy broke up ages ago, and they still play together.
 
 Here 战友 conveys solidarity onstage; 私人恩怨 conveys leaving personal differences out of performing. The line is a familiar, tactless response to teasing, not a military declaration or a formal denial of a grievance. Keep the breakup example and Willy's irritated response together.
 
@@ -41,7 +41,22 @@ The hospital pregnancy disclosure does not yet reveal the late private scene's e
 
 Preserve source discrepancies instead of silently repairing them: the vehicle review gives everyone opportunity; the clue/confrontation also includes Tony's specific Adam sighting. Lili hears a thud before breaking glass. The person opening the door remains unidentified. The missing shoe is not automatically identified at the bedroom doorway.
 
-## Review and validation of this pass
+## Syncing the approved document
+
+Edit the readable script first, keeping the scene IDs and speaker headings. Then run:
+
+```sh
+node scripts/sync-english-script.mjs
+node --test
+```
+
+`node scripts/sync-english-script.mjs --check` verifies that the catalog still matches the document. The test suite runs that check and verifies all 222 story cards, both sunset variants, notebook/reference text and silent actions. New Chinese story content still needs coordinated bilingual editing; this command does not translate it automatically.
+
+Paragraphs inside an existing card are joined with spaces. Document headings, uppercase speaker formatting, and the standalone End cue are editorial formatting, not game dialogue. Canonical source strings remain the catalog keys. Four context overrides preserve the hand/pillow story versions and the two distinct silent beats; Chinese rendering remains canonical. History uses stored checkpoints to recover those contexts, with a readable fallback for ancient labels without checkpoints.
+
+This sync passed 57 workspace tests (52 in the isolated PR snapshot; the extra 5 are unrelated local dashboard tests). Browser checks used disposable local checkpoint fixtures to verify backstage and hospital dialogue, both silent beats, their history, Chinese/English save continuation, both photo variants, notebook testimony, shared clue text, cast profiles, back/forward and the ending. Desktop and 390px portrait checks passed; the longest tested caption did not overflow. See [the current game preview](performance-script-preview.jpg) and [sync QA record](performance-sync-qa.json). No full route playthrough was repeated for this text integration; game progression is covered by the existing tests.
+
+## Previous translation pass (PR #7)
 
 The source was frozen at upstream `412f61e4dcc406dfe100451d43658c1bfb8ac3c9`. A complete native-module extraction/reinsertion round trip was byte-identical and passed all 46 repository tests before translation. Stable IDs, source hashes, scene/speaker metadata, shared locations and the dynamic sunset variant were extracted for 275 units.
 

@@ -1,0 +1,74 @@
+{
+  "baseline": "412f61e4dcc406dfe100451d43658c1bfb8ac3c9",
+  "source_locale": "zh-CN",
+  "target_locale": "en",
+  "fresh_units": 275,
+  "retained_ui_and_names": 197,
+  "total_catalog_keys": 472,
+  "source_sha256": "557df856cbe85566a4a382d84542ca24777adc27c6f90ef524bbbb7ca7898e1b",
+  "target_sha256": "98205280b930c28735370ef0e1ef1784fbfabeb1f174556ac6eef1c8a5c1eae6",
+  "review": {
+    "early": {
+      "units": 104,
+      "minor_changes": 18
+    },
+    "hospital": {
+      "units": 85,
+      "minor_changes": 5
+    },
+    "evidence": {
+      "units": 86,
+      "minor_changes": 8
+    },
+    "type": "Independent native-agent/coordinator editorial review; not human PR approval"
+  },
+  "automated": {
+    "exact_release_tests": 46,
+    "workspace_tests": 51,
+    "translation_errors": 0,
+    "unresolved_translation_warnings": 0,
+    "font_missing_codepoints": 0,
+    "font_visible_codepoints": 59
+  },
+  "playtest": {
+    "schema_version": 1,
+    "passed": true,
+    "build": "build/site",
+    "url": "http://127.0.0.1:8011/?analytics=off",
+    "coverage": [
+      "Fresh invitation, English selection, new game",
+      "Full implemented investigation including all four bag clues, car/tire track, missing pillow, rescue and jammer shutdown",
+      "Hospital arrival, testimony, optional text message, all review groups in two orders",
+      "Correct accusation, confrontation, final reconstruction, arrest, sunset, private Kate ending",
+      "Both optional-photo sunset variants exercised through actual controls",
+      "Refresh and same-checkpoint zh/en continuation, backlog, rewind, back/forward",
+      "Desktop1280x720, Adam and longest sunset caption390x844; no horizontal overflow or inaccessible forward control",
+      "Self-hosted BIZ UDGothic selected/loaded; 59 target codepoints covered; no browser console errors"
+    ],
+    "limitations": [
+      "Not every optional hotspot revisited in browser (Arthur phone covered by automated tests).",
+      "No exhaustive short-landscape/device matrix.",
+      "Chinese text embedded in artwork remains; accompanying clue prose localized.",
+      "No public deployment in this task."
+    ],
+    "evidence": [
+      "qa/fresh-english-preview.jpg",
+      "qa/backstage-desktop.jpg",
+      "qa/font-coverage.json",
+      "qa/release-tests.txt"
+    ],
+    "narrow_longest": {
+      "viewport": [
+        390,
+        844
+      ],
+      "body_width": 390,
+      "line_scroll_and_client_width": 348,
+      "forward_bottom": 798.359375
+    }
+  },
+  "limits": [
+    "Source artwork Chinese lettering retained.",
+    "No public deployment by this change; merge triggers existing Pages workflow."
+  ]
+}

@@ -1,57 +1,56 @@
-# English script: literary translation brief
+# English script: visual novel localization brief
 
-## Scope and source
+## Source and scope
 
-Chinese → English, for the currently playable mystery visual novel. The source is [src/content.mjs](../src/content.mjs): its connected dialogue sequences, scene observations, and clue descriptions. [场景.txt](../场景.txt) supplies wider story context; it also contains interactions not yet playable, which this pass does not add. This is a revision of the game's English text, not a new plot or a translation of the proposed routes.
+Translate the implemented Chinese in [src/content.mjs](../src/content.mjs) into English. Read complete connected scenes, including [lineFor()](../src/content.mjs) with and without the optional old photo. [场景.txt](../场景.txt) supplies context, but contains unimplemented material and older wording; the playable Chinese governs this translation. The authoring canvas does not define playable routes.
 
-Work in complete scenes. Keep each source line's lookup key, speaker, position and associated artwork. English wording may change within that slot. UI commands, stable object labels and the approved names remain consistent.
+The current English was translated afresh from Chinese using `translate-visual-novel`, replacing the earlier literary revision. The old English catalog was excluded from translation inputs. The scope covers 275 unique story, clue, profile, observation and accessibility strings; 197 functional UI labels and approved names were retained. Each Chinese lookup key, speaker, row, artwork association and save identifier remains unchanged. Shared source strings have one English value across their locations.
 
-## Voice and movement
+## English that works in a dialogue box
 
-- Narration stays in the third-person present around the immediate investigation, close to what Locke can perceive. Brief practical thoughts may shade into his inner voice where the Chinese does; explicit first-person notebook observations remain first person. Remembered conversations are staged in the present; accounts of completed crimes use the past. Do not turn the private Kate/Miko scene into Locke's knowledge.
-- Let movement and objects carry the scene. Use pronouns when the antecedent is clear; repeat a name when needed to distinguish people. Avoid a mechanically identical subject–verb opening on every card. Do not replace clear, plain sentences merely to sound literary.
-- Locke is a young medical student, observant and restrained. His concern for Miko should sound spoken, not therapeutic or eloquently confessional. His final questions remain questions and conditional accusations.
-- Willy is abrasive and contemptuous. Arthur is defensive and angry, rather than an interchangeable second Willy. Keep the concrete cabbage and damaged-cassette insults in the backstage exchange.
-- Tony tries to organize and defuse the group; alarm makes him practical. Lili is direct and sometimes wry, and recounts only what she heard or saw.
-- Adam jokes and deflects in company. At the confrontation, his short denials should not acquire invented villainous gestures or an admission.
-- Miko begins warm and familiar. In hospital, preserve her hesitations and ordinary language. In the ending, do not add a knowing smile, an ironic delivery, a confession or an assurance of innocence.
-- Kate moves from familiar warmth to personal suspicion. Her medical information stays exact; her opinions are her own. Do not turn her into an omniscient investigator or sanitize her report-withholding and judgment of the dead men.
+Write what this person would say to the other person at this moment. Translate the social action of an idiom, rather than its clause structure. Use contractions, ordinary verbs, and connected spoken beats. Do not turn each Chinese clause into a separate clipped sentence, or make friends explain themselves in formal report language. Short reactions and actual hesitations should still be short.
 
-## Names and evidence
+For example, Adam's backstage line now reads:
 
-Miko, Willy, Adam, Arthur, Lili, Locke, Tony, Dr. Kate. Keep **tie clip**, **spare pillow**, **black feathers**, and **signal jammer** stable. Distinguish colloquial **suffocation** from the report's **mechanical asphyxia**. Do not use **smothered** before the reconstruction establishes the method.
+> Come on, we just get together to practice. We're all on the same team up there, so we leave the personal stuff out of it. Miko and Willy broke up ages ago, and they still play together.
 
-Preserve Arthur's **left hand**, three diagonal grooves, the nonfatal fall, the later suffocation, and the feather residue. The door-opener is unidentified. The blocker account remains Locke's inference from Miko's testimony, not an independently established fact. Preserve the difference between the vehicle clue's specific sighting and the review dialogue's broader parking opportunities; translating does not resolve that source discrepancy.
+Here 战友 conveys solidarity onstage; 私人恩怨 conveys leaving personal differences out of performing. The line is a familiar, tactless response to teasing, not a military declaration or a formal denial of a grievance. Keep the breakup example and Willy's irritated response together.
 
-## Pilot and self-review
+Use plain third-person present for immediate on-screen action and past tense for accounts of completed events. Preserve explicit first-person thoughts and notebook observations. Narration may stay close to Locke, but must not invent his feelings or disclose things he cannot know. English punctuation and automatic wrapping replace Chinese surface punctuation; do not add manual line breaks or extra pause effects.
 
-Piloted backstage banter, discovery/examination, and the hospital conversation before extending the revision to the whole script. This is **self-review**, not independent review or a blind comparison.
+## Voices and relationships
 
-| Source anchor | Previous English issue | Decision and scene effect |
-| --- | --- | --- |
-| `opening-backstage`: “观众没朝你扔白菜” | “throwing things” loses the specific comic insult | Restore cabbages; keep Willy's aggression concrete rather than making the prose generally more profane. |
-| `opening-memory`: “后来，到了庆功的房子” | “at the house where they are celebrating” reads as an explanatory gloss | Establish the house party directly, without inventing a return home or a new location. |
-| `hospital-arrival`: “洛克和托尼走进病房，洛克把带来的东西放在床头” | Repeated “Locke” and “what he has brought” break the quiet movement into an inventory | Keep both men entering and the items going onto the bedside table; use an established plural antecedent. Do not invent flowers or a gift. |
-| `hospital-followup`: “洛克愣了一下，没有打断她” | “hesitates” describes indecision rather than being briefly taken aback | Restore the reaction, and keep his refusal to interrupt bare. |
-| `kat-miko-private`: “不可能不知道他们在干什么吧” | “couldn't have been unaware” is a heavy double negative in speech | Use a natural spoken challenge without making Kate's suspicions into facts. |
+- **Locke:** practical questions, modest about praise, attentive to Miko through ordinary words and small actions. His concern should not sound like therapy or a detective's speech. Later questioning can be firm without becoming an omniscient verdict.
+- **Tony:** familiar jokes followed by practical organizing, alarm and concern. Keep his speech direct.
+- **Lili:** dry teasing, then a dazed account of limited things she saw and heard. She cannot identify the door-opener.
+- **Willy:** contemptuous and crude where the Chinese is crude. Preserve the cabbage insult; do not add extra profanity elsewhere to manufacture attitude.
+- **Arthur:** defensive about his work, then angrily returns the insult. Keep his early-hours practice and stuck-tape singing comparison.
+- **Adam:** easy banter and a tactless example in company, pointed denials later. His past guitar threat was only for show, not an admitted assault. Do not give him a threatening delivery before the source does.
+- **Miko:** warm and familiar early; vulnerable, hesitant and guarded in hospital; increasingly pointed with Kate. Preserve her shame as her own words, not the narrator's judgment. Neither her silence nor an embrace is a confession.
+- **Dr. Kate:** clinical brevity, friendly teasing, then personal suspicion. Her medical findings remain precise. Her opinions, report suppression and explicit lack of evidence must remain visible.
 
-## Final review boundaries
+Display names are **Miko, Willy, Adam, Arthur, Lili, Locke, Tony, Dr. Kate**. Do not alter Chinese canonical identities. Miko and Willy are exes; Locke is not established as her boyfriend. No invented dialects, habitual nicknames, relationships or motives.
 
-Reread the revised scenes against their Chinese source for agents, sequence, sensory details and modality, then as connected English for breath, repetition and voice. Brief pauses and unadorned silences are retained where they serve the scene. Placeholder parity and complete translation coverage are transport checks; passing them does not establish literary quality.
+## Evidence and knowledge boundaries
 
-The optional-photo sunset line must retain its alternate wording: only the route that viewed the photo can refer to it as evidence. Ordinary descriptions may vary; clue names and critical quoted messages must agree across dialogue and notebook.
+Use **tie clip**, **spare pillow**, **black feathers**, and **signal jammer** consistently. Distinguish colloquial **suffocation** from the report's **mechanical asphyxia**. Reserve the explicit smothering method for its reveal. Preserve Arthur's left hand, three diagonal grooves, nonfatal fall, later murder, feather residue and the switched-back tie clip.
 
-Open source questions remain open: what else Miko intended to say to Willy and Arthur, how much Miko knew or intended, and what the door-opener did. Do not solve them by adding explanatory English. Original written text embedded in artwork is outside this prose revision.
+Keep testimony, suspicion and established findings separate. Early powder is unidentified; sleeping pills are only suspected then. Adam's initial account says Arthur was lying below, not that Adam established death. Miko's account supports Locke's question about Willy taking the jammer; it is not independent proof. The early wheel failure remains under investigation until later evidence establishes tampering.
 
-### Fidelity reread of the working draft
+The hospital pregnancy disclosure does not yet reveal the late private scene's earlier fetal death or substances in the blood. Kate's IP-leak and mastermind hypotheses remain hypotheses, with no evidence. Locke is absent from that scene. Miko neither confesses nor receives an invented assurance of innocence.
 
-- `willy-crash`: rejected “years of abuse.” The source establishes a long duration, not a number of years.
-- `hospital-followup`: retained “wasn't moving after he fell,” rather than “hadn't moved since.” Miko was absent during the later struggle and cannot testify that Arthur never moved.
-- `lili-testimony`: the door strikes Lili; the English must not say somebody deliberately hits her with it.
-- `fall-reconstruction`: removed an added “or said he did” aside. Locke's English must not announce a new suspicion before the source does.
-- `sunset`: explicitly retained the bruises and restored the photo/no-photo distinction after the rewrite.
-- `hospital-followup`: kept Miko's “Do you think I'm awful?” as a question, rather than the draft's more certain “You must think I'm awful.”
+Preserve source discrepancies instead of silently repairing them: the vehicle review gives everyone opportunity; the clue/confrontation also includes Tony's specific Adam sighting. Lili hears a thud before breaking glass. The person opening the door remains unidentified. The missing shoe is not automatically identified at the bedroom doorway.
 
-## Reviewed scope
+## Review and validation of this pass
 
-All 222 dialogue/narration cards were reread as connected scenes against the Chinese. 204 received revised wording; sound short lines were retained. The pass also reviewed 28 clue descriptions (28 revised) and 4 scene observations (2 revised), plus the optional-photo variant. UI labels, names and scene/evidence identifiers were retained.
+The source was frozen at upstream `412f61e4dcc406dfe100451d43658c1bfb8ac3c9`. A complete native-module extraction/reinsertion round trip was byte-identical and passed all 46 repository tests before translation. Stable IDs, source hashes, scene/speaker metadata, shared locations and the dynamic sunset variant were extracted for 275 units.
+
+The backstage calibration received independent source-based review before the language profile and character/evidence Bible were frozen. Three bounded scene groups were translated, then every entry was reviewed by a different native agent, or by the coordinator for the evidence draft. The coordinator adjudicated 31 sparse revisions for meaning, naturalness and cross-scene consistency. This is AI editorial review, separate from the human PR approval required by the contribution guide. A further review covered all early/hospital entries. Review is an editorial judgment; coverage checks do not prove prose quality.
+
+Automated QA found no missing, duplicate or reordered IDs, altered source hashes, placeholder errors or residual Chinese in target prose. All 46 exact-release tests passed. The existing history-format expectation was updated for the new opening line, with coverage checks retained. The shipped BIZ UDGothic fonts cover all 59 distinct target codepoints and were verified selected/loaded in the browser.
+
+Browser testing exercised the full implemented story through the private ending, both photo/no-photo sunset variants, two report orders, optional messages and bag clues, save recovery, same-checkpoint Chinese/English switching, history rewind, and back/forward. Desktop and 390px portrait checks included Adam's exchange and the longest sunset caption. See [the preview](vn-english-preview.jpg).
+
+Original writing embedded in artwork remains Chinese, with the existing accompanying translated clue prose. Not every optional hotspot was revisited in the browser; Arthur's phone is covered by automated tests. Short landscape and an exhaustive device matrix were not tested. The translation patch does not itself imply a public deployment.
+
+The resumable working project, frozen source, Bible, JSONL jobs/drafts/reviews, build, QA and checksummed replacement patch are stored separately in `band-mystery-localization/vn-en-20261124` beside this repository; source snapshots and tool environments are not shipped with the game.

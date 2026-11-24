@@ -134,7 +134,7 @@ test('formatting, notices and legacy history render in the selected language wit
     assert.equal(t(source, {}, 'zh'), source);
     assert.equal(han.test(t(source, {}, 'en')), false, source);
   }
-  assert.equal(t(labels[0], {}, 'en'), 'Locke: “My head\'s spinning. What happened?”');
+  assert.equal(t(labels[0], {}, 'en'), "Locke: “I'm so dizzy. What happened to me?”");
   assert.equal(t('去{place}{checked}', { place: content.scenes['band-bedroom'].label, checked: '（已检查）' }, 'en'), "Go to Arthur, Willy, and Adam's room (searched)");
   assert.equal(t('{age} 岁 · {role}', { age: 24, role: '调音师' }, 'en'), 'Age 24 · Sound engineer');
 });

@@ -1,3 +1,19 @@
+/* Self-hosted Latin subsets: regular captions and bold speaker names. */
+@font-face {
+  font-family: "BIZ UDGothic";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/biz-udgothic-latin-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "BIZ UDGothic";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../assets/fonts/biz-udgothic-latin-700.woff2") format("woff2");
+}
+
 :root {
   color-scheme: dark;
   font-family: system-ui, sans-serif;
@@ -319,7 +335,7 @@ dialog li { padding: .25rem 0; }
 .language-control select:focus-visible { outline: 2px solid #f0be86; outline-offset: 2px; }
 :lang(en) #cover-title { font-family: Georgia, serif; font-size: clamp(1.5rem, 4.3vw, 3.5rem); line-height: 1.12; word-break: normal; overflow-wrap: break-word; }
 :lang(en) .game-name { letter-spacing: .025em; }
-:lang(en) #dialogue { line-height: 1.55; }
+:lang(en) #dialogue, :lang(en) #scene-description { font-family: "BIZ UDGothic", sans-serif; line-height: 1.55; }
 :lang(en) #ending { letter-spacing: .08em; }
 #actions { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
 @media (max-width: 40rem) and (orientation: portrait) {

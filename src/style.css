@@ -353,3 +353,65 @@ dialog li { padding: .25rem 0; }
   #cover-title { margin-bottom: .25em; }
   :lang(en) #cover-title { font-size: clamp(1.2rem, 3vw, 2rem); }
 }
+
+/* Player-facing exploration map; unreached story text is never mounted. */
+.storyline-panel {
+  box-sizing: border-box; width: min(72rem, 96vw); max-width: none;
+  height: min(57rem, calc(100dvh - 2rem)); max-height: calc(100dvh - 2rem);
+  padding: 1rem; overflow: hidden;
+}
+.storyline-panel[open] { display: flex; flex-direction: column; }
+.storyline-panel > form { position: absolute; right: 1rem; top: 1rem; }
+.storyline-panel > h2 { margin: .15rem 5rem .6rem 0; flex-shrink: 0; }
+.storyline-panel #panel-body { display: flex; flex-direction: column; min-height: 0; flex: 1; gap: .55rem; }
+.storyline-intro, .storyline-help { margin: 0; font-size: .88rem; line-height: 1.45; }
+.storyline-help { color: #b3a9b6; font-size: .78rem; }
+.storyline-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.storyline-toolbar button { font-size: .8rem; padding: .4rem .6rem; min-height: 36px; }
+.storyline-progress { margin-right: auto; font-size: .83rem; color: #dbc2a2; font-variant-numeric: tabular-nums; }
+.storyline-zoom { min-width: 3ch; font-size: .78rem; text-align: center; font-variant-numeric: tabular-nums; }
+.storyline-legend { display: flex; flex-wrap: wrap; gap: 1.2rem; color: #b8aebb; font-size: .76rem; }
+.storyline-key::before { content: ''; display: inline-block; width: .6rem; height: .6rem; margin-right: .4rem; border-radius: 2px; background: #54505a; }
+.storyline-key.current::before { background: #9ac8ad; }
+.storyline-key.unlocked::before { background: #c6a06f; }
+.storyline-scroll {
+  min-height: 12rem; flex: 1; overflow: auto; position: relative;
+  border: 1px solid #4a404a; border-radius: .45rem; overscroll-behavior: contain;
+  background-color: #151419;
+  background-image: linear-gradient(#33303945 1px, transparent 1px), linear-gradient(90deg, #33303945 1px, transparent 1px);
+  background-size: 24px 24px; scrollbar-color: #736271 #17151a;
+}
+.storyline-scroll:focus-visible { outline: 2px solid #d5b085; outline-offset: 2px; }
+.storyline-size, .storyline-canvas { position: relative; }
+.storyline-size { margin-inline: auto; }
+.storyline-canvas { transform-origin: top left; }
+.storyline-connections { position: absolute; inset: 0; pointer-events: none; fill: none; stroke-width: 2; }
+.storyline-connections .unlocked { stroke: #b89360; }
+.storyline-connections .locked { stroke: #48434e; stroke-dasharray: 5 5; }
+.storyline-node {
+  position: absolute; display: flex; flex-direction: column; justify-content: center; gap: .4rem;
+  padding: .7rem 1rem; box-sizing: border-box; border-radius: .4rem; text-align: left;
+  background: #28212b; border: 1px solid #9b7d58; color: #f0e5d6;
+}
+.storyline-node strong { font-size: .9rem; line-height: 1.3; overflow-wrap: anywhere; }
+.storyline-node span { font-size: .72rem; color: #bfb0c0; }
+.storyline-node.current { background: #263a32; border: 2px solid #9ac8ad; }
+.storyline-node.current span { color: #b2dbbf; }
+.storyline-node[aria-pressed="true"] { outline: 2px solid #e7d8c3; outline-offset: 3px; }
+.storyline-node:focus-visible { outline: 3px solid #fff0ca; outline-offset: 3px; }
+.storyline-node.locked { opacity: 1; background: #211f25; border-color: #4a4550; color: #89818e; cursor: default; }
+.storyline-node.locked span { color: #817987; }
+.storyline-detail { max-height: 30%; overflow: auto; min-height: 4.7rem; flex-shrink: 0; padding: .55rem .7rem; border-left: 2px solid #9b7d58; }
+.storyline-detail h3 { margin: 0 0 .25rem; font-size: .94rem; }
+.storyline-detail p { margin: 0 0 .4rem; color: #c0b3c1; font-size: .8rem; }
+.storyline-detail button { font-size: .8rem; padding: .35rem .65rem; min-height: 36px; }
+@media (max-width: 40rem) {
+  .storyline-panel { padding: .75rem; }
+  .storyline-panel > form { top: .75rem; right: .75rem; }
+  .storyline-toolbar { gap: .3rem; }
+  .storyline-progress { flex-basis: 100%; }
+  .storyline-scroll { min-height: 10rem; }
+}
+
+.storyline-investigations { margin: .35rem 0 .5rem; padding-left: 1.2rem; font-size: .78rem; line-height: 1.6; color: #c0b3c1; }
+.storyline-investigations .locked { color: #817987; }

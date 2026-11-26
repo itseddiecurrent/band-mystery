@@ -3,7 +3,8 @@ import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, pars
 import { canSolve } from './evidence_list.mjs';
 import { createPortraitCache, portraitFilename } from './portrait-cache.mjs';
 import { installAnalytics } from './analytics.mjs';
-import { t, readLanguage, setLanguage, applyPageLanguage, localizedLine, localizedHistory } from './i18n.mjs?v=performance-script-1';
+import { t, readLanguage, setLanguage, applyPageLanguage, localizedLine, localizedHistory } from './i18n.mjs?v=storyline-2';
+import { renderStoryline } from './storyline-view.mjs?v=storyline-2';
 
 setLanguage(readLanguage());
 applyPageLanguage(document);
@@ -533,7 +534,14 @@ function openPanel(kind) {
   body.replaceChildren();
   panel.classList.toggle('cast-panel', kind === 'profiles' || kind === 'solve');
   panel.classList.toggle('solve-panel', kind === 'solve');
-  if (kind === 'solve') {
+  panel.classList.toggle('storyline-panel', kind === 'storyline');
+  if (kind === 'storyline') {
+    title.textContent = t('剧情路线');
+    renderStoryline(body, game, index => {
+      panel.close();
+      send('rewind', { index });
+    });
+  } else if (kind === 'solve') {
     title.textContent = t('解谜');
     const instruction = document.createElement('p');
     instruction.textContent = t('请选择嫌疑人');

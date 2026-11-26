@@ -26,7 +26,7 @@ test('all approved script cards, notebook entries and reference text stay synced
   }
   assert.equal(cards, 222);
   for (const [source, text] of compiled.translations) assert.equal(english[source], text, source);
-  assert.equal(Object.keys(english).length, 472);
+  assert.equal(Object.keys(english).length, 535);
   execFileSync(process.execPath, ['scripts/sync-english-script.mjs', '--check'], { cwd: new URL('../', import.meta.url) });
 });
 

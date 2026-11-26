@@ -1,4 +1,4 @@
-import { english, englishDialogueOverrides } from './locales/en.mjs?v=storyline-1';
+import { english, englishDialogueOverrides } from './locales/en.mjs?v=storyline-2';
 import { dialogues, lineFor } from './content.mjs?v=jammer-search-1';
 
 export const LANGUAGE_KEY = 'band-mystery.language.v1';

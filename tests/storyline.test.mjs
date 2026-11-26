@@ -31,6 +31,7 @@ test('a new game exposes only its current story node, with no locked titles or e
   assert.equal(map.unlockedCount, 1);
   for (const node of map.nodes.filter(node => !node.unlocked)) {
     assert.equal(node.title, null);
+    assert.equal(node.image, null);
     assert.equal(node.optional, false);
     assert.equal(node.review, false);
     assert.equal(node.ending, false);
@@ -130,4 +131,20 @@ test('legacy history restores visited nodes and saved checkpoints can revisit wi
   const ending = nodeAt(legacy, 'ending');
   assert.equal(ending.unlocked, true);
   assert.equal(ending.current, false);
+});
+
+
+test('revealed thumbnails reference shipped assets and locked nodes never expose them', async () => {
+  const { access } = await import('node:fs/promises');
+  const game = newGame();
+  // Archived checkpoints reveal the complete map without changing the current route.
+  game.history = Object.keys(dialogues).map(id => ({ checkpoint: { dialogue: { id }, clues: [], scene: 'wake' } }));
+  game.history.push({ label: '剧情结束' }, { checkpoint: { scene: 'bedroom-hall', searchingJammer: true, clues: [] } });
+  const map = storylineFor(game);
+  assert.equal(map.unlockedCount, 26);
+  for (const node of map.nodes) {
+    assert.ok(node.image);
+    await access(new URL(`../assets/${node.image}`, import.meta.url));
+    assert.ok(node.chapter >= 0 && node.chapter < 6);
+  }
 });

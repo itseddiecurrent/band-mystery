@@ -54,6 +54,18 @@ export const storylineNodes = implementedNodes.filter(node => !detailParents[nod
 });
 export const storylineEdges = storylineNodes.slice(1).map((node, index) => [storylineNodes[index].id, node.id]);
 
+const chapterStarts = [0, 4, 8, 12, 16, 20];
+export const storylineChapters = ['序幕', '发现', '搜查', '警方调查', '证词', '余波'];
+const thumbnails = [
+  'upstairs-wake-up.jpg', 'opening-backstage.jpg', 'title-screen.jpg', 'upstairs-hallway.jpg',
+  'arthur-dead.jpg', 'tony-bedroom.jpg', 'tony-before-sleep-extra-pillow.jpg', 'lili-backdoor.jpg',
+  'band-shared-bedroom.jpg', 'miko-cornfield.jpg', 'living-room-fireplace.jpg', 'fireplace-jammer-closeup.jpg',
+  'backyard-rear-door.jpg', 'police-staircase-cordon.jpg', 'band-group-photo.jpg', 'willy-wall-crash.jpg',
+  'hospital-visit.jpg', 'upstairs-hallway.jpg', 'police-staircase-cordon.jpg', 'rehearsal-confrontation.jpg',
+  'rehearsal-confrontation.jpg', 'staircase-final-reconstruction.jpg', 'rehearsal-confrontation.jpg',
+  'hilltop-sunset.jpg', 'hospital-kat-miko.jpg', 'hilltop-sunset.jpg',
+];
+
 const dialogueLabels = new Map();
 for (const [id, rows] of Object.entries(dialogues)) rows.forEach(([speaker, text], line) => {
   for (const clueIds of [[], ['old-photo']]) {
@@ -127,7 +139,8 @@ export function storylineFor(game) {
     const checkpointIndex = unlocked ? (game.history ?? []).findIndex(row => node.dialogueIds.includes(row.checkpoint?.dialogue?.id)) : -1;
     // The returned model contains no titles or descriptions for undiscovered nodes.
     return { id: node.id, row: node.row, column: node.column, unlocked, current: node.id === active,
-      title: unlocked ? node.title : null, optional: unlocked && Boolean(node.optional),
+      title: unlocked ? node.title : null, image: unlocked ? thumbnails[node.row] : null,
+      chapter: chapterStarts.findLastIndex(start => node.row >= start), optional: unlocked && Boolean(node.optional),
       chosen: Boolean(node.optional && node.clueIds?.some(id => present.clues.has(id))), review: unlocked && Boolean(node.review),
       details: unlocked ? node.details.map(detail => {
         const revealed = Boolean(reached(detail, known));

@@ -525,6 +525,17 @@ export const english = {
   "这项可选调查的线索已记入当前进度。": "The clue from this optional investigation is recorded at the current checkpoint.",
   "此前已探索这项调查，当前进度尚未记录对应线索。": "You explored this before, but its clue is not recorded at the current checkpoint.",
   "本路线已记录": "Recorded on this route",
+  "序幕": "Prologue",
+  "发现": "Discovery",
+  "搜查": "Search",
+  "警方调查": "Police inquiry",
+  "证词": "Testimony",
+  "余波": "Aftermath",
+  "剧情章节": "Story chapters",
+  "剧情探索度": "Story explored",
+  "调查记录": "Investigations",
+  "拖动浏览 · 单一路线": "Drag to explore · One story route",
+  "第 {number} 章：{title}": "Chapter {number}: {title}",
 };
 
 // Context-specific prose and silent actions; canonical story rows and saves remain Chinese.

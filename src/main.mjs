@@ -3,8 +3,8 @@ import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, pars
 import { canSolve } from './evidence_list.mjs';
 import { createPortraitCache, portraitFilename } from './portrait-cache.mjs';
 import { installAnalytics } from './analytics.mjs';
-import { t, readLanguage, setLanguage, applyPageLanguage, localizedLine, localizedHistory } from './i18n.mjs?v=storyline-1';
-import { renderStoryline } from './storyline-view.mjs?v=storyline-1';
+import { t, readLanguage, setLanguage, applyPageLanguage, localizedLine, localizedHistory } from './i18n.mjs?v=storyline-2';
+import { renderStoryline } from './storyline-view.mjs?v=storyline-2';
 
 setLanguage(readLanguage());
 applyPageLanguage(document);

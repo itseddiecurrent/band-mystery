@@ -1,5 +1,5 @@
-import { storylineFor, storylineChapters } from './storyline.mjs?v=party-fork-1';
-import { t } from './i18n.mjs?v=party-fork-1';
+import { storylineFor, storylineChapters } from './storyline.mjs?v=magnifier-clues-1';
+import { t } from './i18n.mjs?v=magnifier-clues-1';
 
 // Map coordinates describe the route, while the HUD remains anchored to the viewport.
 const NODE_W = 224;

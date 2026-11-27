@@ -1,4 +1,5 @@
 import { characterProfileNames, clues, dialogues, jammerSearchRoutes, lineFor, nearbyScenes, purseHotspots, reviewGroups, scenes, sodaChoices, storyTransitions } from './content.mjs?v=party-choice-1';
+import { magnifierClues, requiresMagnifier, validLensInspection } from './magnifier.mjs?v=magnifier-clues-1';
 import { canSolve } from './evidence_list.mjs';
 
 export const bedrooms = ['band-bedroom', 'miko-lili-bedroom'];
@@ -105,6 +106,9 @@ function applyAction(game, action) {
     record(next, `前往 · ${scenes[scene].label}`);
     return result();
   };
+
+  if (requiresMagnifier(action.type) && !progress.clues.includes(magnifierClues[action.type]) &&
+      !validLensInspection(progress, action)) return unchanged();
 
   if (action.type === 'solve') {
     if (progress.dialogue || progress.finished || !canSolve(progress, action.suspect)) return unchanged({ notice: '解密失败，请继续调查' });

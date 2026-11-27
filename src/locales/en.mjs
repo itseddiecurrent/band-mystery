@@ -555,6 +555,10 @@ export const english = {
   "本路线已选择": "Chosen on this route",
   "后来，洛克去了楼上休息，小柔也过来了。": "Later, Locke heads upstairs for a breather. Miko comes over.",
   "后续待续": "To be continued",
+  "开启放大镜寻找细节。方向键移动，回车检查。": "Turn on the magnifier to find details. Use arrow keys to move and Enter to inspect.",
+  "发现细节，点击或按回车检查。": "Detail spotted. Click or press Enter to inspect.",
+  "移动放大镜寻找细节；方向键移动，回车检查。": "Move the magnifier to find details. Arrow keys move; Enter inspects.",
+  "放大镜搜索画面": "Magnifier search area",
 };
 
 // Context-specific prose and silent actions; canonical story rows and saves remain Chinese.

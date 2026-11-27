@@ -1,5 +1,5 @@
-import { english, englishDialogueOverrides } from './locales/en.mjs?v=party-fork-1';
-import { dialogues, lineFor } from './content.mjs?v=party-fork-1';
+import { english, englishDialogueOverrides } from './locales/en.mjs?v=magnifier-clues-1';
+import { dialogues, lineFor } from './content.mjs?v=magnifier-clues-1';
 
 export const LANGUAGE_KEY = 'band-mystery.language.v1';
 export const languages = ['zh', 'en'];

@@ -1,4 +1,4 @@
-import { clues, dialogues, scenes, sodaChoices, lineFor } from './content.mjs?v=party-fork-1';
+import { clues, dialogues, scenes, sodaChoices, lineFor } from './content.mjs?v=magnifier-clues-1';
 
 // Only playable content belongs here. Authoring-canvas proposals are deliberately separate.
 const chapter = (id, row, title, dialogueIds, extra = {}) => ({ id, row, column: 1, title, dialogueIds, ...extra });

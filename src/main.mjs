@@ -1,10 +1,11 @@
-import { arthurRelationships, characterProfileNames, clues, dialogues, nearbyScenes, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes, sodaChoices, storyTransitions } from './content.mjs?v=party-fork-1';
-import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs?v=party-fork-1';
+import { arthurRelationships, characterProfileNames, clues, dialogues, nearbyScenes, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes, sodaChoices, storyTransitions } from './content.mjs?v=magnifier-clues-1';
+import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs?v=magnifier-clues-1';
+import { pointInHotspot, requiresMagnifier } from './magnifier.mjs?v=magnifier-clues-1';
 import { canSolve } from './evidence_list.mjs';
 import { createPortraitCache, portraitFilename } from './portrait-cache.mjs';
 import { installAnalytics } from './analytics.mjs';
-import { t, readLanguage, setLanguage, applyPageLanguage, localizedLine, localizedHistory } from './i18n.mjs?v=party-fork-1';
-import { renderStoryline } from './storyline-view.mjs?v=party-fork-1';
+import { t, readLanguage, setLanguage, applyPageLanguage, localizedLine, localizedHistory } from './i18n.mjs?v=magnifier-clues-1';
+import { renderStoryline } from './storyline-view.mjs?v=magnifier-clues-1';
 
 setLanguage(readLanguage());
 applyPageLanguage(document);
@@ -14,7 +15,7 @@ const analytics = installAnalytics();
 const byId = id => document.getElementById(id);
 // Refresh URLs after the custom-domain rollback so browsers do not reuse cached redirects.
 const assetFilename = name => name === 'arthur-phone-lock-screen.png' ? name : name.replace(/\.png$/, '.jpg');
-const asset = name => new URL('../assets/' + assetFilename(name).split('/').map(encodeURIComponent).join('/'), import.meta.url).href + (name === 'title-screen.png' ? '?v=title-faces-2' : name === 'living-room-fireplace.png' ? '?v=party-fork-1' : '?v=scene-images-1');
+const asset = name => new URL('../assets/' + assetFilename(name).split('/').map(encodeURIComponent).join('/'), import.meta.url).href + (name === 'title-screen.png' ? '?v=title-faces-2' : name === 'living-room-fireplace.png' ? '?v=magnifier-clues-1' : '?v=scene-images-1');
 const portraitAsset = name => asset(portraitFilename(name));
 const portraitCache = createPortraitCache(portraitAsset);
 const loader = byId('asset-loader');
@@ -31,6 +32,9 @@ let sessionId = null;
 let game = null;
 let saved = null;
 let lensEnabled = false;
+let lensPoint = [50, 50];
+let lensTargets = [];
+let lensTarget = null;
 let image = null;
 let portraitTarget = null;
 const preloadedSceneImages = new Map();
@@ -271,6 +275,11 @@ function send(type, extra = {}) {
 function setImage(name) {
   if (image === name) return;
   image = name;
+  lensEnabled = false;
+  byId('lens-toggle').setAttribute('aria-pressed', 'false');
+  stage.classList.remove('magnifying');
+  byId('lens-hint').hidden = true;
+  lensTarget = null;
   byId('scene').fetchPriority = 'high';
   byId('scene').src = asset(name);
   lens.style.backgroundImage = `url("${asset(name)}")`;
@@ -369,8 +378,8 @@ function render() {
   const inspecting = exploring && !progress.visiting;
   const inTonyChapter = progress.scene === 'tony' && !searchingJammer;
   const beforeWakingTony = inTonyChapter && !progress.tonyAwake;
-  byId('lens-toggle').disabled = !exploring || (!progress.visiting && !scene.hotspots.length);
-  if (byId('lens-toggle').disabled) lens.hidden = true;
+  lensTargets = [];
+  lensTarget = null;
   const hotspots = byId('hotspots');
   const focused = document.activeElement?.dataset.hotspot;
   hotspots.replaceChildren();
@@ -386,7 +395,10 @@ function render() {
       if (progress.tonyAwake && item.id === 'wake-tony') continue;
       if (item.id === 'cornfield' && !canEnterCornfield(progress)) continue;
       if (item.id === 'jammer' && progress.jammer) continue;
+      lensTargets.push(item);
+      if (requiresMagnifier(item.id)) continue;
       const target = hotspotButton(item);
+      if (lensEnabled) target.tabIndex = -1;
       if (item.id === 'disable-jammer') {
         target.setAttribute('role', 'switch');
         target.setAttribute('aria-checked', 'true');
@@ -398,6 +410,19 @@ function render() {
       if (focused === item.id) target.focus();
     }
   }
+  byId('lens-toggle').disabled = !exploring || !lensTargets.length;
+  if (byId('lens-toggle').disabled) {
+    lensEnabled = false;
+    lens.hidden = true;
+    byId('lens-hint').hidden = true;
+  }
+  byId('lens-toggle').setAttribute('aria-pressed', String(lensEnabled));
+  byId('lens-toggle').title = t('开启放大镜寻找细节。方向键移动，回车检查。');
+  stage.classList.toggle('magnifying', lensEnabled);
+  stage.tabIndex = lensEnabled ? 0 : -1;
+  if (lensEnabled) { stage.setAttribute('role', 'application'); stage.setAttribute('aria-label', t('放大镜搜索画面')); }
+  else { stage.removeAttribute('role'); stage.removeAttribute('aria-label'); }
+  if (lensEnabled) updateLens(lensPoint);
   const actions = byId('actions');
   actions.replaceChildren();
   if (progress.sodaChoicePending) {
@@ -771,20 +796,19 @@ document.querySelectorAll('[data-panel]').forEach(control => {
   control.onclick = () => openPanel(control.dataset.panel);
 });
 
-byId('lens-toggle').onclick = event => {
+byId('lens-toggle').onclick = () => {
   lensEnabled = !lensEnabled;
   lens.hidden = true;
-  event.currentTarget.setAttribute('aria-pressed', String(lensEnabled));
+  byId('lens-hint').hidden = !lensEnabled;
+  render();
+  if (lensEnabled) stage.focus({ preventScroll: true });
 };
-function placeLens(event) {
+function updateLens(point) {
   if (!lensEnabled || byId('lens-toggle').disabled || panel.open) return;
+  lensPoint = point.map(value => Math.max(0, Math.min(100, value)));
   const bounds = stage.getBoundingClientRect();
-  const x = event.clientX - bounds.left;
-  const y = event.clientY - bounds.top;
-  if (x < 0 || x > bounds.width || y < 0 || y > bounds.height) {
-    lens.hidden = true;
-    return;
-  }
+  const x = bounds.width * lensPoint[0] / 100;
+  const y = bounds.height * lensPoint[1] / 100;
   lens.hidden = false;
   const radius = lens.offsetWidth / 2;
   const zoom = 2.4;
@@ -792,10 +816,55 @@ function placeLens(event) {
   lens.style.top = y + 'px';
   lens.style.backgroundSize = `${bounds.width * zoom}px ${bounds.height * zoom}px`;
   lens.style.backgroundPosition = `${radius - x * zoom}px ${radius - y * zoom}px`;
+  lensTarget = lensTargets.find(item => pointInHotspot(lensPoint, item.rect)) ?? null;
+  lens.classList.toggle('found', Boolean(lensTarget));
+  const hint = byId('lens-hint');
+  const text = t(lensTarget ? '发现细节，点击或按回车检查。' : '移动放大镜寻找细节；方向键移动，回车检查。');
+  if (hint.textContent !== text) hint.textContent = text;
+  hint.hidden = false;
+}
+function placeLens(event) {
+  if (!lensEnabled || panel.open) return;
+  const bounds = stage.getBoundingClientRect();
+  updateLens([(event.clientX - bounds.left) / bounds.width * 100,
+    (event.clientY - bounds.top) / bounds.height * 100]);
+}
+function inspectLens() {
+  if (!lensEnabled || lens.hidden || !lensTarget || panel.open) return;
+  send(lensTarget.id, { inspection: { tool: 'magnifier', scene: game.progress.visiting ?? game.progress.scene,
+    point: [...lensPoint] } });
 }
 stage.addEventListener('pointerdown', placeLens);
 stage.addEventListener('pointermove', placeLens);
-stage.addEventListener('pointerleave', () => { lens.hidden = true; });
+stage.addEventListener('pointerleave', () => {
+  lens.hidden = true;
+  lensTarget = null;
+  byId('lens-hint').hidden = true;
+});
+stage.addEventListener('click', event => {
+  if (!lensEnabled) return;
+  placeLens(event);
+  inspectLens();
+});
+stage.addEventListener('keydown', event => {
+  if (!lensEnabled || panel.open || event.target !== stage) return;
+  const movement = { ArrowLeft: [-2, 0], ArrowRight: [2, 0], ArrowUp: [0, -2], ArrowDown: [0, 2] }[event.key];
+  if (movement) {
+    event.preventDefault();
+    updateLens([lensPoint[0] + movement[0], lensPoint[1] + movement[1]]);
+  } else if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!event.repeat) inspectLens();
+  } else if (event.key === 'Escape') {
+    event.preventDefault();
+    lensEnabled = false;
+    lens.hidden = true;
+    byId('lens-hint').hidden = true;
+    render();
+    byId('lens-toggle').focus();
+  }
+});
 initializeSession();
 render();
 loadGameImages();

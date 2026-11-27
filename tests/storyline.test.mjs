@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { dialogues, scenes, clues, reviewGroups } from '../src/content.mjs';
-import { newGame, dispatch, parseSave } from '../src/game.mjs';
+import { newGame, dispatch as rawDispatch, parseSave } from '../src/game.mjs';
+import { lensAction } from './lens-actions.mjs';
+const dispatch = (game, action) => rawDispatch(game, lensAction(game, action));
 import { storylineFor, storylineNodes, storylineEdges } from '../src/storyline.mjs';
 import { t } from '../src/i18n.mjs';
 

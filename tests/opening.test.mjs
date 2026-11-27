@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { access } from 'node:fs/promises';
 import { clues, dialogues, lineFor, pendingArtwork, portrait, portraitFor, profiles, purseHotspots, purseImages, reviewGroups, scenes } from '../src/content.mjs';
-import { dispatch, newGame, parseSave, visitDestinations } from '../src/game.mjs';
+import { dispatch as rawDispatch, newGame, parseSave, visitDestinations } from '../src/game.mjs';
+import { lensAction } from './lens-actions.mjs';
+const dispatch = (game, action) => rawDispatch(game, lensAction(game, action));
 
 const step = (game, type) => dispatch(game, { type }).game;
 function visitWithoutAdvancing(game, type, destination) {

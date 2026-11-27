@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newGame, dispatch, parseSave, visitDestinations } from '../src/game.mjs';
+import { newGame, dispatch as rawDispatch, parseSave, visitDestinations } from '../src/game.mjs';
+import { lensAction } from './lens-actions.mjs';
+const dispatch = (game, action) => rawDispatch(game, lensAction(game, action));
 import { dialogues, sodaChoices } from '../src/content.mjs';
 import { storylineFor } from '../src/storyline.mjs';
 import { localizedHistory, localizedLine, setLanguage, t } from '../src/i18n.mjs';

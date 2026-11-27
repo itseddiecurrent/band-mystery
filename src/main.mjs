@@ -1,10 +1,10 @@
-import { arthurRelationships, characterProfileNames, clues, dialogues, nearbyScenes, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes, sodaChoices, storyTransitions } from './content.mjs?v=party-choice-1';
-import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs?v=party-choice-1';
+import { arthurRelationships, characterProfileNames, clues, dialogues, nearbyScenes, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes, sodaChoices, storyTransitions } from './content.mjs?v=party-fork-1';
+import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs?v=party-fork-1';
 import { canSolve } from './evidence_list.mjs';
 import { createPortraitCache, portraitFilename } from './portrait-cache.mjs';
 import { installAnalytics } from './analytics.mjs';
-import { t, readLanguage, setLanguage, applyPageLanguage, localizedLine, localizedHistory } from './i18n.mjs?v=party-choice-1';
-import { renderStoryline } from './storyline-view.mjs?v=party-choice-1';
+import { t, readLanguage, setLanguage, applyPageLanguage, localizedLine, localizedHistory } from './i18n.mjs?v=party-fork-1';
+import { renderStoryline } from './storyline-view.mjs?v=party-fork-1';
 
 setLanguage(readLanguage());
 applyPageLanguage(document);
@@ -14,7 +14,7 @@ const analytics = installAnalytics();
 const byId = id => document.getElementById(id);
 // Refresh URLs after the custom-domain rollback so browsers do not reuse cached redirects.
 const assetFilename = name => name === 'arthur-phone-lock-screen.png' ? name : name.replace(/\.png$/, '.jpg');
-const asset = name => new URL('../assets/' + assetFilename(name).split('/').map(encodeURIComponent).join('/'), import.meta.url).href + (name === 'title-screen.png' ? '?v=title-faces-2' : name === 'living-room-fireplace.png' ? '?v=party-choice-1' : '?v=scene-images-1');
+const asset = name => new URL('../assets/' + assetFilename(name).split('/').map(encodeURIComponent).join('/'), import.meta.url).href + (name === 'title-screen.png' ? '?v=title-faces-2' : name === 'living-room-fireplace.png' ? '?v=party-fork-1' : '?v=scene-images-1');
 const portraitAsset = name => asset(portraitFilename(name));
 const portraitCache = createPortraitCache(portraitAsset);
 const loader = byId('asset-loader');

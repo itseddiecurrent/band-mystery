@@ -554,6 +554,7 @@ export const english = {
   "拖动浏览": "Drag to explore",
   "本路线已选择": "Chosen on this route",
   "后来，洛克去了楼上休息，小柔也过来了。": "Later, Locke heads upstairs for a breather. Miko comes over.",
+  "后续待续": "To be continued",
 };
 
 // Context-specific prose and silent actions; canonical story rows and saves remain Chinese.

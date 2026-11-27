@@ -8,7 +8,7 @@ import { childrenOf, descendantsOf, editTree, layoutTree, validateTree, NODE_HEI
 import { createStoryEditorServer } from '../scripts/story-editor.mjs';
 
 const seed = JSON.parse(await readFile(new URL('../docs/story-tree.json', import.meta.url), 'utf8'));
-const sample = () => ({ version: 1, title: '剧情测试', nodes: seed.nodes.slice(0, 4).map(node => ({ ...node, status: 'draft' })) });
+const sample = () => ({ version: 1, title: '剧情测试', nodes: seed.nodes.filter(node => ['wake', 'backstage', 'party', 'blackout'].includes(node.id)).map(node => ({ ...node, parentId: node.id === 'blackout' ? 'party' : node.parentId, status: 'draft' })) });
 let sequence = 0;
 const id = () => `new-${++sequence}`;
 
@@ -16,8 +16,12 @@ test('initial editor document covers the entire existing story and stays separat
   validateTree(seed);
   assert.equal(seed.nodes[0].title, '洛克醒来');
   assert.equal(seed.nodes.at(-1).title, '凯特与小柔私下谈话');
-  assert.equal(seed.nodes.every(node => node.status === 'current'), true);
-  assert.equal(seed.nodes.filter(node => node.kind === 'choice').length, 0);
+  assert.equal(seed.nodes.filter(node => node.status === 'current').length, 27);
+  assert.equal(seed.nodes.filter(node => node.status === 'implemented').length, 3);
+  assert.deepEqual(seed.nodes.filter(node => node.kind === 'choice').map(node => node.id), ['party-soda-choice']);
+  assert.deepEqual(childrenOf(seed, 'party-soda-choice').map(node => node.id), ['party-soda-lili', 'party-soda-fridge']);
+  assert.deepEqual(childrenOf(seed, 'party-soda-lili'), []);
+  assert.equal(seed.nodes.find(node => node.id === 'blackout').parentId, 'party-soda-fridge');
 });
 
 test('adding a branch preserves the continuation and original data; siblings retain their parent', () => {
@@ -130,7 +134,7 @@ test('server exposes only authoring assets, not game configuration or unrelated 
 
 
 test('gray baseline nodes retain their text and connections while accepting new branches', () => {
-  const baseline = { ...sample(), nodes: seed.nodes.slice(0, 4).map(node => ({ ...node })) };
+  const baseline = { ...sample(), nodes: sample().nodes.map(node => ({ ...node, status: 'current' })) };
   for (const action of [
     { type: 'update', id: 'party', patch: { title: 'changed' } },
     { type: 'update', id: 'party', patch: { status: 'draft' } },

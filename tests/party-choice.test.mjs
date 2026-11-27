@@ -44,7 +44,16 @@ test('taking Lili’s can keeps her awake and pauses without entering the origin
   for (const action of ['advance', 'phone', 'backdoor', 'lili-testimony', 'drink', 'hospital']) assert.equal(step(game, action), game);
   assert.deepEqual(parseSave(JSON.stringify(game)), game);
   const map = storylineFor(game);
-  assert.equal(map.currentId, 'party');
+  assert.equal(map.currentId, 'soda-lili');
+  const awake = map.nodes.find(node => node.id === 'soda-lili');
+  const fridge = map.nodes.find(node => node.id === 'soda-fridge');
+  assert.equal(awake.chosen, true);
+  assert.equal(awake.paused, true);
+  assert.equal(fridge.unlocked, false);
+  assert.equal(fridge.title, null);
+  assert.equal(fridge.image, null);
+  assert.ok(map.edges.some(edge => edge.from === 'party' && edge.to === 'soda-lili' && edge.unlocked));
+  assert.ok(!map.edges.some(edge => edge.from === 'soda-lili'));
   assert.equal(map.nodes.find(node => node.id === 'backyard').unlocked, false);
   assert.equal(map.nodes.find(node => node.id === 'ending').unlocked, false);
 });
@@ -83,8 +92,8 @@ test('back, forward, rewind and locale switches preserve or replace the choice w
   const fridge = step(restored, 'choose-soda', { id: 'fridge' });
   assert.equal(fridge.progress.liliAwake, false);
   assert.deepEqual(fridge.future, []);
-  const details = storylineFor(fridge).nodes.find(node => node.id === 'party').details;
-  assert.deepEqual(details.map(item => [item.id, item.unlocked, item.recorded]), [['soda-lili', true, false], ['soda-fridge', true, true]]);
+  const fork = storylineFor(fridge).nodes.filter(node => ['soda-lili', 'soda-fridge'].includes(node.id));
+  assert.deepEqual(fork.map(node => [node.id, node.unlocked, node.chosen]), [['soda-lili', true, false], ['soda-fridge', true, true]]);
   const serialized = JSON.stringify(fridge);
   setLanguage('en');
   assert.ok(localizedHistory(fridge.history, 'en').every(text => !/\p{Script=Han}/u.test(text)));

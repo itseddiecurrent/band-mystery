@@ -461,3 +461,5 @@ dialog li { padding: .25rem 0; }
 #actions[aria-label] button { min-height: 48px; text-align: left; white-space: normal; line-height: 1.5; }
 .party-route-pause { flex-basis: 100%; margin: .3rem 0; line-height: 1.5; }
 @media (max-width: 40rem) { #actions[aria-label] { grid-template-columns: 1fr; } }
+.storyline-node.chosen .storyline-node-status { opacity: 1; color: #f5d0a3; }
+.storyline-branch-pause { color: #cbb18d; font-size: 13px; }

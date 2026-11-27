@@ -1,4 +1,4 @@
-import { characterProfileNames, clues, dialogues, jammerSearchRoutes, lineFor, nearbyScenes, purseHotspots, reviewGroups, scenes, storyTransitions } from './content.mjs?v=jammer-search-1';
+import { characterProfileNames, clues, dialogues, jammerSearchRoutes, lineFor, nearbyScenes, purseHotspots, reviewGroups, scenes, sodaChoices, storyTransitions } from './content.mjs?v=party-choice-1';
 import { canSolve } from './evidence_list.mjs';
 
 export const bedrooms = ['band-bedroom', 'miko-lili-bedroom'];
@@ -120,9 +120,18 @@ function applyAction(game, action) {
     if (!checkpoint) return unchanged();
     next.progress = structuredClone(checkpoint);
     record(next, `从此处继续 · ${scenes[checkpoint.scene].label}`);
-    showLine(next);
+    if (next.progress.dialogue) showLine(next);
     return result();
   }
+  if (action.type === 'choose-soda') {
+    if (!progress.sodaChoicePending || progress.dialogue || !sodaChoices.some(choice => choice.id === action.id)) return unchanged();
+    delete progress.sodaChoicePending;
+    progress.sodaChoice = action.id;
+    progress.liliAwake = action.id === 'lili';
+    startDialogue(next, action.id === 'lili' ? 'party-soda-taken' : 'party-soda-fridge');
+    return result();
+  }
+  if (progress.sodaChoicePending || progress.partyRoutePaused) return unchanged();
   if (action.type === 'advance') {
     if (!progress.dialogue) return unchanged();
     const current = progress.dialogue;
@@ -189,10 +198,20 @@ function applyAction(game, action) {
         startDialogue(next, 'opening-backstage');
         break;
       case 'opening-backstage':
+        arrive('party', 'party-soda');
+        break;
+      case 'party-soda':
+        progress.sodaChoicePending = true;
+        next.history.push({ label: '选择饮料', checkpoint: structuredClone(progress) });
+        break;
+      case 'party-soda-taken':
+        progress.partyRoutePaused = true;
+        break;
+      case 'party-soda-fridge':
         startDialogue(next, 'opening-memory');
         break;
       case 'opening-memory':
-        startDialogue(next, 'opening-return');
+        arrive('wake', 'opening-return');
         break;
       case 'hand':
         return recordClue(current.id);
@@ -527,6 +546,11 @@ function applyAction(game, action) {
 
 function validProgress(progress) {
   if (!progress || !Object.hasOwn(scenes, progress.scene) ||
+      (progress.sodaChoice !== undefined && !sodaChoices.some(choice => choice.id === progress.sodaChoice)) ||
+      ['sodaChoicePending', 'partyRoutePaused', 'liliAwake'].some(key => progress[key] !== undefined && typeof progress[key] !== 'boolean') ||
+      (progress.sodaChoice !== undefined && progress.liliAwake !== (progress.sodaChoice === 'lili')) ||
+      (progress.sodaChoicePending && (progress.scene !== 'party' || progress.dialogue !== null || progress.sodaChoice !== undefined)) ||
+      (progress.partyRoutePaused && (progress.scene !== 'party' || progress.dialogue !== null || progress.sodaChoice !== 'lili')) ||
       (progress.visiting !== undefined && !Object.hasOwn(nearbyScenes, progress.visiting)) ||
       (progress.reviewedGroups !== undefined && (!Array.isArray(progress.reviewedGroups) || !progress.reviewedGroups.every(id => Object.hasOwn(reviewGroups, id)))) ||
       (progress.pillowReturnScene !== undefined && !['tony', 'hospital', 'review'].includes(progress.pillowReturnScene)) ||

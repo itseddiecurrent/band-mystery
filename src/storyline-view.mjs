@@ -1,5 +1,5 @@
-import { storylineFor, storylineChapters } from './storyline.mjs?v=storyline-2';
-import { t } from './i18n.mjs?v=storyline-2';
+import { storylineFor, storylineChapters } from './storyline.mjs?v=party-fork-1';
+import { t } from './i18n.mjs?v=party-fork-1';
 
 // Map coordinates describe the route, while the HUD remains anchored to the viewport.
 const NODE_W = 224;
@@ -7,7 +7,7 @@ const NODE_H = 126;
 const GAP = 330;
 const HEIGHT = 680;
 const levels = [290, 170, 330, 250, 390, 230, 340, 190];
-const point = node => ({ x: 160 + node.row * GAP, y: levels[node.row % levels.length] });
+const point = node => ({ x: 160 + node.row * GAP, y: node.lane === 'upper' ? 100 : node.lane === 'lower' ? 360 : node.id === 'party' ? 230 : levels[node.row % levels.length] });
 const element = (tag, className, text) => {
   const result = document.createElement(tag);
   if (className) result.className = className;
@@ -24,7 +24,7 @@ const control = (label, action, className = '') => {
 export function renderStoryline(body, game, onRewind) {
   const model = storylineFor(game);
   const byId = new Map(model.nodes.map(node => [node.id, node]));
-  const width = model.nodes.length * GAP + 160;
+  const width = (Math.max(...model.nodes.map(node => node.row)) + 1) * GAP + 160;
   const chapterRail = element('nav', 'storyline-chapters');
   chapterRail.setAttribute('aria-label', t('剧情章节'));
   const viewport = element('div', 'storyline-scroll');
@@ -58,13 +58,20 @@ export function renderStoryline(body, game, onRewind) {
   let selectedChapter = byId.get(selected)?.chapter ?? 0;
   const nodeButtons = new Map();
   const chapterButtons = [];
+  function neighbor(node, direction) {
+    if (direction === 'sibling') return model.nodes.find(other => other.row === node.row && other.id !== node.id && other.unlocked);
+    const candidates = model.edges.filter(edge => direction === 'back' ? edge.to === node.id : edge.from === node.id)
+      .map(edge => byId.get(direction === 'back' ? edge.from : edge.to)).filter(other => other.unlocked);
+    return candidates.find(other => other.chosen) ?? candidates[0];
+  }
   function center(id) {
     const node = byId.get(id);
     if (!node) return;
     viewTarget = id;
     const { x, y } = point(node);
+    const focusY = node.id === 'party' || node.lane ? 293 : y + NODE_H / 2;
     viewport.scrollTo({ left: (x + NODE_W / 2) * zoom - viewport.clientWidth / 2,
-      top: verticalOffset + (y + NODE_H / 2) * zoom - viewport.clientHeight / 2 });
+      top: verticalOffset + focusY * zoom - viewport.clientHeight / 2 });
   }
   function setZoom(value) {
     zoom = Math.max(.6, Math.min(2, Math.round(value * 10) / 10));
@@ -88,15 +95,16 @@ export function renderStoryline(body, game, onRewind) {
     for (const [id, button] of nodeButtons) button.setAttribute('aria-pressed', String(id === selected));
     detail.replaceChildren();
     const heading = element('div', 'storyline-selection');
-    heading.append(element('span', 'storyline-selected-status', t(node.current ? '当前位置' : '已探索')), element('h3', '', t(node.title)));
+    heading.append(element('span', 'storyline-selected-status', t(node.current ? '当前位置' : node.chosen && node.choice ? '本路线已选择' : '已探索')), element('h3', '', t(node.title)));
     detail.append(heading);
+    if (node.paused) detail.append(element('span', 'storyline-branch-pause', t('后续待续')));
     if (node.details.length) {
       const investigations = element('details', 'storyline-investigations');
       investigations.append(element('summary', '', t('调查记录')));
       const list = element('ul');
       for (const item of node.details) {
         const row = element('li', item.unlocked ? '' : 'locked');
-        row.append(element('span', '', item.unlocked ? t(item.title) : '???'), element('small', '', t(!item.unlocked ? '未探索' : item.recorded ? '本路线已记录' : '已探索')));
+        row.append(element('span', '', item.unlocked ? t(item.title) : '???'), element('small', '', t(!item.unlocked ? '未探索' : item.recorded ? (item.choice ? '本路线已选择' : '本路线已记录') : '已探索')));
         list.append(row);
       }
       investigations.append(list);
@@ -133,7 +141,7 @@ export function renderStoryline(body, game, onRewind) {
   }
   canvas.append(svg);
   for (const node of model.nodes) {
-    const button = element('button', `storyline-node ${node.unlocked ? 'unlocked' : 'locked'}${node.current ? ' current' : ''}`);
+    const button = element('button', `storyline-node ${node.unlocked ? 'unlocked' : 'locked'}${node.current ? ' current' : ''}${node.chosen && node.choice ? ' chosen' : ''}`);
     button.type = 'button';
     button.dataset.storyNode = node.id;
     button.disabled = !node.unlocked;
@@ -147,17 +155,17 @@ export function renderStoryline(body, game, onRewind) {
       image.draggable = false;
       button.append(image);
     } else button.append(element('span', 'storyline-unknown-art', '—'));
-    const status = element('span', 'storyline-node-status', t(node.current ? '当前位置' : node.unlocked ? '已探索' : '未探索'));
+    const status = element('span', 'storyline-node-status', t(node.current ? '当前位置' : node.chosen && node.choice ? '本路线已选择' : node.unlocked ? '已探索' : '未探索'));
     button.append(status);
     if (node.current) button.setAttribute('aria-current', 'step');
     if (node.unlocked) {
       button.setAttribute('aria-pressed', 'false');
       button.onclick = event => { if (!dragged || event.detail === 0) select(node); };
       button.onkeydown = event => {
-        const direction = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[event.key];
+        const direction = { ArrowLeft: 'back', ArrowUp: 'sibling', ArrowRight: 'next', ArrowDown: 'sibling' }[event.key];
         if (!direction) return;
         event.preventDefault();
-        const target = model.nodes[node.row + direction];
+        const target = neighbor(node, direction);
         if (target?.unlocked) { select(target); center(target.id); nodeButtons.get(target.id).focus({ preventScroll: true }); }
       };
     }
@@ -175,7 +183,7 @@ export function renderStoryline(body, game, onRewind) {
     if (active) { select(active); center(active.id); nodeButtons.get(active.id).focus({ preventScroll: true }); }
   }, 'storyline-locate'));
   footer.append(progress, detail, controls);
-  const hint = element('p', 'storyline-pan-hint', t('拖动浏览 · 单一路线'));
+  const hint = element('p', 'storyline-pan-hint', t('拖动浏览'));
   body.append(chapterRail, viewport, hint, footer);
   let dragged = false;
   let drag = null;
@@ -226,9 +234,10 @@ export function renderStoryline(body, game, onRewind) {
       if (pad) {
         const pressed = pad.buttons.map(button => button.pressed);
         if (pressed[1] && !previous[1]) { panel.close(); return; }
-        const direction = pressed[14] || pad.axes[0] < -.5 ? -1 : pressed[15] || pad.axes[0] > .5 ? 1 : 0;
+        const direction = pressed[12] || pressed[13] || Math.abs(pad.axes[1] ?? 0) > .5 ? 'sibling' :
+          pressed[14] || pad.axes[0] < -.5 ? 'back' : pressed[15] || pad.axes[0] > .5 ? 'next' : null;
         if (direction && now - lastMove > 220) {
-          const node = model.nodes[byId.get(selected).row + direction];
+          const node = neighbor(byId.get(selected), direction);
           if (node?.unlocked) { select(node); center(node.id); nodeButtons.get(node.id).focus({ preventScroll: true }); }
           lastMove = now;
         }

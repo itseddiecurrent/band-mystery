@@ -112,6 +112,12 @@ export function compileEnglishScript(document, content) {
       assign(variant[1], alternate);
     }
   }
+  const drinkChoices = referenceEntries(references.get('PARTY CHOICES') ?? '');
+  requireThat(drinkChoices.size === content.sodaChoices.length, 'party choice coverage changed');
+  for (const choice of content.sodaChoices) {
+    requireThat(drinkChoices.has(choice.id), `missing party choice ${choice.id}`);
+    assign(choice.label, drinkChoices.get(choice.id).text);
+  }
   const notebook = referenceEntries(references.get('CLUE NOTEBOOK') ?? '');
   requireThat(notebook.size === Object.keys(content.clues).length, 'clue coverage changed');
   for (const [id, clue] of Object.entries(content.clues)) {

@@ -31,7 +31,13 @@ export const storyTransitions = {
   sunset: ['hospital-ending', 'kat-miko-private'],
 };
 
+export const sodaChoices = [
+  { id: 'lili', label: '不介意的话，这罐我拿啦！' },
+  { id: 'fridge', label: '我去冰箱再拿一罐。' },
+];
+
 export const scenes = {
+  party: { label: '9月15日晚的庆功宴', image: 'party-locke-lili-couch.png', hotspots: [] },
   rehearsal: {
     label: '排练室',
     image: 'rehearsal-confrontation.png',
@@ -309,8 +315,21 @@ export const dialogues = {
     ['蛋仔', '我咋会这样？以前也就是做做样子。我的主张就是不爽就说出来，憋着会憋出内伤的。'],
     ['洛克', '好啦好啦，大家都这么棒，何必这样。'],
   ],
+  'party-soda': [
+    ['洛克', '今晚这场聚会真不错。小莉，我渴了，哪儿有喝的？', { image: 'party-locke-lili-couch.png', memory: true, alt: '庆功宴上，洛克与小莉坐在沙发上交谈' }],
+    ['小莉', '有汽水呀。蛋仔给了我这罐荔枝味的。你也要来一罐吗？', { image: 'party-locke-lili-couch.png', memory: true, alt: '庆功宴上，洛克与小莉坐在沙发上交谈' }],
+    [null, '小莉手边放着一罐汽水，就在两人中间。正好是洛克喜欢的口味。', { image: 'party-soda-closeup.png', memory: true, focusObject: true, alt: '洛克与小莉之间的沙发坐垫上，小莉手边放着一罐灰色汽水' }],
+  ],
+  'party-soda-taken': [
+    ['小莉', '行呀，你拿吧。'],
+    [null, '洛克拿起了那罐汽水。小莉收回手，接着和他聊天。'],
+  ],
+  'party-soda-fridge': [
+    ['小莉', '好，冰箱里还有。'],
+    [null, '洛克起身去冰箱拿了另一罐汽水。小莉的那罐留在她手边。'],
+  ],
   'opening-memory': [
-    [null, '后来，到了庆功的房子，小柔过来找洛克。'],
+    [null, '后来，洛克去了楼上休息，小柔也过来了。'],
     ['小柔', '洛克，有你和我们一起真好，演出这么成功多亏了你的调音了！'],
     ['洛克', '哪里哪里，你们演得好啊，一个晚上都是粉丝的尖叫声。'],
     ['小柔', '兄弟，得好好跟你喝一杯！'],

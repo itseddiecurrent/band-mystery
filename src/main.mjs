@@ -1,10 +1,10 @@
-import { arthurRelationships, characterProfileNames, clues, dialogues, nearbyScenes, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes, storyTransitions } from './content.mjs?v=jammer-search-1';
-import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs?v=jammer-search-1';
+import { arthurRelationships, characterProfileNames, clues, dialogues, nearbyScenes, portrait, portraitFor, profiles, reviewGroups, purseHotspots, purseImages, scenes, sodaChoices, storyTransitions } from './content.mjs?v=party-fork-1';
+import { bedrooms, canEnterCornfield, canSearchBedrooms, dispatch, newGame, parseSave, SAVE_KEY, visitDestinations } from './game.mjs?v=party-fork-1';
 import { canSolve } from './evidence_list.mjs';
 import { createPortraitCache, portraitFilename } from './portrait-cache.mjs';
 import { installAnalytics } from './analytics.mjs';
-import { t, readLanguage, setLanguage, applyPageLanguage, localizedLine, localizedHistory } from './i18n.mjs?v=storyline-2';
-import { renderStoryline } from './storyline-view.mjs?v=storyline-2';
+import { t, readLanguage, setLanguage, applyPageLanguage, localizedLine, localizedHistory } from './i18n.mjs?v=party-fork-1';
+import { renderStoryline } from './storyline-view.mjs?v=party-fork-1';
 
 setLanguage(readLanguage());
 applyPageLanguage(document);
@@ -14,7 +14,7 @@ const analytics = installAnalytics();
 const byId = id => document.getElementById(id);
 // Refresh URLs after the custom-domain rollback so browsers do not reuse cached redirects.
 const assetFilename = name => name === 'arthur-phone-lock-screen.png' ? name : name.replace(/\.png$/, '.jpg');
-const asset = name => new URL('../assets/' + assetFilename(name).split('/').map(encodeURIComponent).join('/'), import.meta.url).href + (name === 'title-screen.png' ? '?v=title-faces-2' : name === 'living-room-fireplace.png' ? '?v=jammer-search-1' : '?v=scene-images-1');
+const asset = name => new URL('../assets/' + assetFilename(name).split('/').map(encodeURIComponent).join('/'), import.meta.url).href + (name === 'title-screen.png' ? '?v=title-faces-2' : name === 'living-room-fireplace.png' ? '?v=party-fork-1' : '?v=scene-images-1');
 const portraitAsset = name => asset(portraitFilename(name));
 const portraitCache = createPortraitCache(portraitAsset);
 const loader = byId('asset-loader');
@@ -334,6 +334,8 @@ function render() {
   const searchingJammer = progress.searchingJammer === true;
   const dialogue = progress.dialogue;
   const backstageMemory = dialogue?.id === 'opening-backstage';
+  const partyMemory = location === 'party' && dialogue?.id !== 'opening-memory';
+  const sodaCloseup = partyMemory && (progress.sodaChoicePending || dialogue?.id === 'party-soda' && dialogue.line === 2);
   const hospitalMemory = dialogue?.id === 'miko-memory';
   const jammerCloseup = location === 'fireplace' && !progress.visiting && !dialogue && progress.jammer === 'found';
   const scene = jammerCloseup ? scenes.fireplace.closeup : scenes[location];
@@ -341,17 +343,19 @@ function render() {
   byId('forward').disabled = !dialogue && !game.future.length;
   const currentLine = dialogue ? localizedLine(progress) : null;
   const artwork = currentLine?.[2];
-  const sceneImage = searchingJammer && location === 'tony' ? scenes.tony.emptyImage : scene.image;
+  const sceneImage = dialogue?.id === 'opening-memory' ? scenes.wake.image : sodaCloseup ? 'party-soda-closeup.png' : searchingJammer && location === 'tony' ? scenes.tony.emptyImage : scene.image;
   setImage(artwork?.image ?? (backstageMemory ? scenes.wake.backstageImage : hospitalMemory ? scenes.landing.image : dialogue?.id === 'hand' ? clues.hand.image : sceneImage));
   preloadLikelyNextImages(progress, location);
-  byId('scene').alt = t(artwork?.alt ?? (backstageMemory ? '演出结束后的后台' : hospitalMemory ? '昨晚楼梯口的回忆' : dialogue?.id === 'hand' ? clues.hand.label : scene.label));
+  byId('scene').alt = t(artwork?.alt ?? (dialogue?.id === 'opening-memory' ? scenes.wake.label : sodaCloseup ? '洛克与小莉之间的沙发坐垫上，小莉手边放着一罐灰色汽水' : backstageMemory ? '演出结束后的后台' : hospitalMemory ? '昨晚楼梯口的回忆' : dialogue?.id === 'hand' ? clues.hand.label : scene.label));
   const description = byId('scene-description');
   description.textContent = t(scene.description ?? '');
   description.hidden = !scene.description;
   const [speaker, line] = currentLine ?? [];
-  stage.classList.toggle('speaking', backstageMemory || ['willy-crash', 'hand'].includes(dialogue?.id) ? Boolean(speaker) : Boolean(dialogue));
-  stage.classList.toggle('memory', location === 'tony-memory' || Boolean(artwork?.memory) || backstageMemory || dialogue?.id === 'opening-memory' || hospitalMemory || dialogue?.id === 'final-reconstruction');
+  stage.classList.toggle('speaking', sodaCloseup ? false : backstageMemory || ['willy-crash', 'hand'].includes(dialogue?.id) ? Boolean(speaker) : Boolean(dialogue));
+  stage.classList.toggle('memory', location === 'tony-memory' || Boolean(artwork?.memory) || partyMemory || backstageMemory || dialogue?.id === 'opening-memory' || hospitalMemory || dialogue?.id === 'final-reconstruction');
   stage.classList.toggle('backstage-memory', backstageMemory);
+  stage.classList.toggle('party-memory', partyMemory);
+  stage.classList.toggle('party-paused', Boolean(progress.partyRoutePaused));
   byId('dialogue').hidden = !dialogue;
   setPortrait(speaker, dialogue?.id);
   stage.classList.toggle('finished', progress.finished);
@@ -361,7 +365,7 @@ function render() {
     byId('line').textContent = t(line);
   }
 
-  const exploring = !dialogue && !progress.finished && !progress.profilesPending;
+  const exploring = !dialogue && !progress.finished && !progress.profilesPending && !progress.sodaChoicePending && !progress.partyRoutePaused;
   const inspecting = exploring && !progress.visiting;
   const inTonyChapter = progress.scene === 'tony' && !searchingJammer;
   const beforeWakingTony = inTonyChapter && !progress.tonyAwake;
@@ -396,6 +400,20 @@ function render() {
   }
   const actions = byId('actions');
   actions.replaceChildren();
+  if (progress.sodaChoicePending) {
+    actions.setAttribute('aria-label', t('选择饮料'));
+    actions.setAttribute('role', 'group');
+    for (const choice of sodaChoices) actions.append(button(choice.label, () => send('choose-soda', { id: choice.id })));
+    actions.querySelector('button')?.focus();
+  } else { actions.removeAttribute('aria-label'); actions.removeAttribute('role'); }
+  if (progress.partyRoutePaused) {
+    const message = document.createElement('p');
+    message.className = 'party-route-pause';
+    message.textContent = t('本路线暂时到这里。小莉保持清醒，后续剧情尚未开放。');
+    actions.append(message);
+    const index = game.history.findLastIndex(row => row.checkpoint?.sodaChoicePending);
+    if (index >= 0) actions.append(button('返回饮料选择', () => send('rewind', { index })));
+  }
   if (inspecting && !searchingJammer) {
     if (['tony', 'hospital', 'review'].includes(progress.scene) && progress.clues.includes('milk') && !progress.clues.includes('tony-pillow')) {
       actions.append(button('回看托尼的睡前回忆', () => send('recall-pillow')));

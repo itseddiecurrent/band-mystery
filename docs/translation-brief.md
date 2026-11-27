@@ -69,3 +69,8 @@ Browser testing exercised the full implemented story through the private ending,
 Original writing embedded in artwork remains Chinese, with the existing accompanying translated clue prose. Not every optional hotspot was revisited in the browser; Arthur's phone is covered by automated tests. Short landscape and an exhaustive device matrix were not tested. The translation patch does not itself imply a public deployment.
 
 The resumable working project, frozen source, Bible, JSONL jobs/drafts/reviews, build, QA and checksummed replacement patch are stored separately in `band-mystery-localization/vn-en-20261124` beside this repository; source snapshots and tool environments are not shipped with the game.
+
+
+## Party soda decision — November 27, 2026
+
+The September 15 party scene now follows the backstage flashback. Its three dialogue groups and two choice labels are included in `english-script.txt`; the sync compiler verifies the choice IDs and both languages together with the story cards (49 groups, 229 cards). The fridge route includes a short transition upstairs before Miko's existing water conversation. The take-can route pauses after Lili responds, without a completed ending or the original drowsy-yard testimony. No car or blocker outcome is added. New scene artwork has no written flavor clue; its readable description and the lychee dialogue are bilingual.

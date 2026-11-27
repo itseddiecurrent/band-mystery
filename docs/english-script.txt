@@ -61,10 +61,40 @@ LOCKE
 All right, all right. You were all great. Leave it there.
 
 ========================================================================
+THE PARTY — SEPTEMBER 15 [party-soda]
+========================================================================
+
+LOCKE
+What a party tonight. I'm thirsty, Lili. Where can I get a drink?
+
+LILI
+We've got soda. Adam gave me this lychee one. Want one too?
+
+There's a can by Lili's hand, between the two of them. Locke's favorite flavor.
+
+========================================================================
+TAKING LILI'S CAN [party-soda-taken]
+========================================================================
+
+LILI
+Sure, go ahead.
+
+Locke picks up the can. Lili moves her hand back and keeps talking to him.
+
+========================================================================
+GETTING ANOTHER SODA [party-soda-fridge]
+========================================================================
+
+LILI
+Okay. There's more in the fridge.
+
+Locke gets up and takes another soda from the fridge. Lili's can stays beside her.
+
+========================================================================
 THE RENTED HOUSE — LATER THAT NIGHT [opening-memory]
 ========================================================================
 
-At the party, Miko comes over to Locke.
+Later, Locke heads upstairs for a breather. Miko comes over.
 
 MIKO
 Locke, I'm so glad you came. You had us sounding so good out there.
@@ -950,6 +980,16 @@ One bed. A blanket and air mattress on the floor. No one here.
 
 Miko and Lili's room [miko-lili-bedroom]
 Empty. Miko's shoulder bag is still here.
+
+========================================================================
+PARTY CHOICES
+========================================================================
+
+TAKE LILI'S CAN [lili]
+I'll take this one, if you don't mind!
+
+GET ANOTHER CAN [fridge]
+I'll grab another one from the fridge.
 
 ========================================================================
 ARTWORK / ACCESSIBILITY DESCRIPTIONS — REFERENCE

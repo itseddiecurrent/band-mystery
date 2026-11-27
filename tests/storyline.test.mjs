@@ -7,7 +7,9 @@ import { t } from '../src/i18n.mjs';
 
 const step = (game, type, extra = {}) => dispatch(game, { type, ...extra }).game;
 function finish(game) {
-  for (let i = 0; game.progress.dialogue && i < 80; i++) game = step(game, 'advance');
+  for (let i = 0; (game.progress.dialogue || game.progress.sodaChoicePending) && i < 80; i++) {
+    game = game.progress.sodaChoicePending ? dispatch(game, { type: 'choose-soda', id: 'fridge' }).game : step(game, 'advance');
+  }
   assert.equal(game.progress.dialogue, null);
   return game;
 }
@@ -42,13 +44,16 @@ test('a new game exposes only its current story node, with no locked titles or e
   assert.equal(JSON.stringify(game), before);
 });
 
-test('the graph is one route regardless of investigation order and covers every implemented dialogue', () => {
+test('only the soda decision forks the route; all implemented dialogue is covered', () => {
   const dialogueIds = storylineNodes.flatMap(node => node.dialogueIds);
   assert.deepEqual([...dialogueIds].sort(), Object.keys(dialogues).sort());
   assert.equal(new Set(storylineNodes.map(node => node.id)).size, storylineNodes.length);
   assert.equal(storylineEdges.length, storylineNodes.length - 1);
   assert.ok(storylineNodes.every(node => node.column === 0));
-  for (let i = 1; i < storylineNodes.length; i++) assert.deepEqual(storylineEdges[i - 1], [storylineNodes[i - 1].id, storylineNodes[i].id]);
+  assert.deepEqual(storylineEdges.filter(([from]) => from === 'party'), [['party', 'soda-lili'], ['party', 'soda-fridge']]);
+  assert.deepEqual(storylineEdges.filter(([from]) => from === 'soda-lili'), []);
+  assert.deepEqual(storylineEdges.filter(([from]) => from === 'soda-fridge'), [['soda-fridge', 'hallway']]);
+  for (const node of storylineNodes.filter(node => node.id !== 'party')) assert.ok(storylineEdges.filter(([from]) => from === node.id).length <= 1);
   assert.deepEqual(storylineNodes.flatMap(node => node.details).filter(node => node.optional).map(node => node.id), ['phone', 'old-photo', 'message']);
   assert.equal(storylineNodes.filter(node => node.ending).length, 1);
   for (const node of storylineNodes) {
@@ -141,7 +146,7 @@ test('revealed thumbnails reference shipped assets and locked nodes never expose
   game.history = Object.keys(dialogues).map(id => ({ checkpoint: { dialogue: { id }, clues: [], scene: 'wake' } }));
   game.history.push({ label: '剧情结束' }, { checkpoint: { scene: 'bedroom-hall', searchingJammer: true, clues: [] } });
   const map = storylineFor(game);
-  assert.equal(map.unlockedCount, 26);
+  assert.equal(map.unlockedCount, 28);
   for (const node of map.nodes) {
     assert.ok(node.image);
     await access(new URL(`../assets/${node.image}`, import.meta.url));

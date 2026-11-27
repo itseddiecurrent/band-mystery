@@ -1,11 +1,11 @@
-import { clues, dialogues, scenes, lineFor } from './content.mjs?v=jammer-search-1';
+import { clues, dialogues, scenes, sodaChoices, lineFor } from './content.mjs?v=party-choice-1';
 
 // Only playable content belongs here. Authoring-canvas proposals are deliberately separate.
 const chapter = (id, row, title, dialogueIds, extra = {}) => ({ id, row, column: 1, title, dialogueIds, ...extra });
 const implementedNodes = [
   chapter('wake', 0, '庆功宴后醒来', ['opening']),
   chapter('backstage', 1, '回想演出后台', ['opening-backstage']),
-  chapter('party', 2, '庆功宴上的交谈', ['opening-memory']),
+  chapter('party', 2, '庆功宴上的交谈', ['party-soda', 'party-soda-taken', 'party-soda-fridge', 'opening-memory']),
   chapter('hallway', 3, '照亮楼梯与走廊', ['opening-return', 'phone'], { sceneIds: ['landing'] }),
   chapter('body', 4, '楼梯下的发现', ['discovery', 'examination', 'hand']),
   chapter('phone', 4, '查看亚瑟的手机', [], { column: 3, optional: true, clueIds: ['arthur-phone'] }),
@@ -57,7 +57,7 @@ export const storylineEdges = storylineNodes.slice(1).map((node, index) => [stor
 const chapterStarts = [0, 4, 8, 12, 16, 20];
 export const storylineChapters = ['序幕', '发现', '搜查', '警方调查', '证词', '余波'];
 const thumbnails = [
-  'upstairs-wake-up.jpg', 'opening-backstage.jpg', 'title-screen.jpg', 'upstairs-hallway.jpg',
+  'upstairs-wake-up.jpg', 'opening-backstage.jpg', 'party-locke-lili-couch.jpg', 'upstairs-hallway.jpg',
   'arthur-dead.jpg', 'tony-bedroom.jpg', 'tony-before-sleep-extra-pillow.jpg', 'lili-backdoor.jpg',
   'band-shared-bedroom.jpg', 'miko-cornfield.jpg', 'living-room-fireplace.jpg', 'fireplace-jammer-closeup.jpg',
   'backyard-rear-door.jpg', 'police-staircase-cordon.jpg', 'band-group-photo.jpg', 'willy-wall-crash.jpg',
@@ -80,13 +80,14 @@ for (const [id, rows] of Object.entries(dialogues)) rows.forEach(([speaker, text
 function factsFrom(game, includeArchive = true) {
   const states = includeArchive ? [game.progress, ...(game.past ?? []), ...(game.future ?? []),
     ...(game.history ?? []).map(row => row.checkpoint).filter(Boolean)] : [game.progress];
-  const facts = { dialogues: new Set(), scenes: new Set(), clues: new Set(), flags: new Set(), finished: false };
+  const facts = { dialogues: new Set(), scenes: new Set(), clues: new Set(), flags: new Set(), finished: false, sodaChoices: new Set() };
   for (const state of states) {
     if (!state) continue;
     if (state.dialogue) facts.dialogues.add(state.dialogue.id);
     facts.scenes.add(state.visiting ?? state.scene);
     for (const id of state.clues ?? []) facts.clues.add(id);
     for (const id of state.reviewedGroups ?? []) facts.dialogues.add(id);
+    if (state.sodaChoice) facts.sodaChoices.add(state.sodaChoice);
     if (state.searchingJammer) facts.flags.add('searchingJammer');
     facts.finished ||= state.finished === true;
   }
@@ -120,7 +121,7 @@ function currentId(progress) {
     return progress.jammer === 'found' ? 'signal' : 'jammer-search';
   }
   if (location === 'yard') return progress.danzaiReturned ? 'rescue' : progress.clues.includes('drink') ? 'search' : 'backyard';
-  const ids = { wake: 'hallway', landing: 'hallway', arthur: 'body', tony: 'tony', 'tony-memory': 'pillow',
+  const ids = { party: 'party', wake: 'hallway', landing: 'hallway', arthur: 'body', tony: 'tony', 'tony-memory': 'pillow',
     lili: 'backyard', 'bedroom-hall': 'search', 'band-bedroom': 'shared-room', 'miko-lili-bedroom': 'miko-room',
     'tony-car': 'car', 'tony-tire-tracks': 'car', cornfield: 'rescue', 'danzai-statement': 'witness',
     police: 'police', 'clip-detail': 'police', 'group-photo': 'photo', 'old-photo': 'old-photo',
@@ -146,7 +147,11 @@ export function storylineFor(game) {
         const revealed = Boolean(reached(detail, known));
         return { id: detail.id, title: revealed ? detail.title : null, unlocked: revealed,
           recorded: Boolean(detail.clueIds?.some(id => present.clues.has(id))) };
-      }) : [],
+      }).concat(node.id === 'party' ? sodaChoices.map(choice => ({
+        id: `soda-${choice.id}`, choice: true,
+        title: known.sodaChoices.has(choice.id) ? choice.label : null,
+        unlocked: known.sodaChoices.has(choice.id), recorded: present.sodaChoices.has(choice.id),
+      })) : []) : [],
       checkpointIndex, ending: unlocked && Boolean(node.ending) };
   });
   const byId = new Map(nodes.map(node => [node.id, node]));

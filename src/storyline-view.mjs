@@ -1,5 +1,5 @@
-import { storylineFor, storylineChapters } from './storyline.mjs?v=storyline-2';
-import { t } from './i18n.mjs?v=storyline-2';
+import { storylineFor, storylineChapters } from './storyline.mjs?v=party-choice-1';
+import { t } from './i18n.mjs?v=party-choice-1';
 
 // Map coordinates describe the route, while the HUD remains anchored to the viewport.
 const NODE_W = 224;
@@ -96,7 +96,7 @@ export function renderStoryline(body, game, onRewind) {
       const list = element('ul');
       for (const item of node.details) {
         const row = element('li', item.unlocked ? '' : 'locked');
-        row.append(element('span', '', item.unlocked ? t(item.title) : '???'), element('small', '', t(!item.unlocked ? '未探索' : item.recorded ? '本路线已记录' : '已探索')));
+        row.append(element('span', '', item.unlocked ? t(item.title) : '???'), element('small', '', t(!item.unlocked ? '未探索' : item.recorded ? (item.choice ? '本路线已选择' : '本路线已记录') : '已探索')));
         list.append(row);
       }
       investigations.append(list);
@@ -175,7 +175,7 @@ export function renderStoryline(body, game, onRewind) {
     if (active) { select(active); center(active.id); nodeButtons.get(active.id).focus({ preventScroll: true }); }
   }, 'storyline-locate'));
   footer.append(progress, detail, controls);
-  const hint = element('p', 'storyline-pan-hint', t('拖动浏览 · 单一路线'));
+  const hint = element('p', 'storyline-pan-hint', t('拖动浏览'));
   body.append(chapterRail, viewport, hint, footer);
   let dragged = false;
   let drag = null;

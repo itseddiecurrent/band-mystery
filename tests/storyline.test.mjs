@@ -7,7 +7,9 @@ import { t } from '../src/i18n.mjs';
 
 const step = (game, type, extra = {}) => dispatch(game, { type, ...extra }).game;
 function finish(game) {
-  for (let i = 0; game.progress.dialogue && i < 80; i++) game = step(game, 'advance');
+  for (let i = 0; (game.progress.dialogue || game.progress.sodaChoicePending) && i < 80; i++) {
+    game = game.progress.sodaChoicePending ? dispatch(game, { type: 'choose-soda', id: 'fridge' }).game : step(game, 'advance');
+  }
   assert.equal(game.progress.dialogue, null);
   return game;
 }

@@ -12,7 +12,9 @@ function visitWithoutAdvancing(game, type, destination) {
   return response.game;
 }
 function finishDialogue(game) {
-  for (let i = 0; game.progress.dialogue && i < 40; i++) game = step(game, 'advance');
+  for (let i = 0; (game.progress.dialogue || game.progress.sodaChoicePending) && i < 40; i++) {
+    game = game.progress.sodaChoicePending ? dispatch(game, { type: 'choose-soda', id: 'fridge' }).game : step(game, 'advance');
+  }
   assert.equal(game.progress.dialogue, null);
   return game;
 }
@@ -357,6 +359,11 @@ test('the opening moves from the memory back to the present before opening the c
   for (const _ of dialogues.opening) game = step(game, 'advance');
   assert.deepEqual(game.progress.dialogue, { id: 'opening-backstage', line: 0 });
   for (const _ of dialogues['opening-backstage']) game = step(game, 'advance');
+  assert.deepEqual(game.progress.dialogue, { id: 'party-soda', line: 0 });
+  for (const _ of dialogues['party-soda']) game = step(game, 'advance');
+  assert.equal(game.progress.sodaChoicePending, true);
+  game = dispatch(game, { type: 'choose-soda', id: 'fridge' }).game;
+  for (const _ of dialogues['party-soda-fridge']) game = step(game, 'advance');
   assert.deepEqual(game.progress.dialogue, { id: 'opening-memory', line: 0 });
   assert.equal(step(game, 'phone'), game);
   game = step(game, 'advance');

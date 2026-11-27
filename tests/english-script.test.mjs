@@ -12,7 +12,7 @@ const compiled = compileEnglishScript(document, content);
 const progressAt = (id, line, clues = []) => ({ dialogue: { id, line }, clues });
 
 test('all approved script cards, notebook entries and reference text stay synced without changing Chinese rows', () => {
-  assert.equal(compiled.sceneIds.length, 46);
+  assert.equal(compiled.sceneIds.length, 49);
   let cards = 0;
   for (const [id, rows] of Object.entries(content.dialogues)) {
     for (let line = 0; line < rows.length; line++) {
@@ -24,9 +24,9 @@ test('all approved script cards, notebook entries and reference text stay synced
       cards++;
     }
   }
-  assert.equal(cards, 222);
+  assert.equal(cards, 229);
   for (const [source, text] of compiled.translations) assert.equal(english[source], text, source);
-  assert.equal(Object.keys(english).length, 535);
+  assert.equal(Object.keys(english).length, 553);
   execFileSync(process.execPath, ['scripts/sync-english-script.mjs', '--check'], { cwd: new URL('../', import.meta.url) });
 });
 
